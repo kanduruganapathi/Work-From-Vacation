@@ -7,16 +7,30 @@ import {
   ApplicationStatus,
   InterviewPrep,
   Job,
+  JobFacets,
 } from "@/lib/api";
 
 const PAGE = 24;
 
-const TABS: { key: string; label: string; params: Record<string, string> }[] = [
+const TABS: {
+  key: string;
+  label: string;
+  params: Record<string, string>;
+  facet?: "remote" | string;
+}[] = [
   { key: "all", label: "All", params: {} },
-  { key: "remote", label: "Remote", params: { remote: "true" } },
-  { key: "full_time", label: "Full-time", params: { employment_type: "full_time" } },
-  { key: "contract", label: "Contract", params: { employment_type: "contract" } },
-  { key: "freelance", label: "Freelance", params: { employment_type: "freelance" } },
+  { key: "remote", label: "Remote", params: { remote: "true" }, facet: "remote" },
+  { key: "full_time", label: "Full-time", params: { employment_type: "full_time" }, facet: "full_time" },
+  { key: "contract", label: "Contract", params: { employment_type: "contract" }, facet: "contract" },
+  { key: "freelance", label: "Freelance", params: { employment_type: "freelance" }, facet: "freelance" },
+];
+
+const RECENCY = [
+  { label: "Any time", value: "" },
+  { label: "Past 24h", value: "1" },
+  { label: "Past 3 days", value: "3" },
+  { label: "Past week", value: "7" },
+  { label: "Past month", value: "30" },
 ];
 
 const STATUS_LABEL: Record<ApplicationStatus, string> = {
@@ -43,13 +57,54 @@ export default function JobFeed({
 }) {
   const [tab, setTab] = useState("all");
   const [q, setQ] = useState("");
+  const [sort, setSort] = useState("recent");
+  const [source, setSource] = useState("");
+  const [recency, setRecency] = useState("");
+  const [tag, setTag] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [offset, setOffset] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [facets, setFacets] = useState<JobFacets | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [detail, setDetail] = useState<Job | null>(null);
   const [prep, setPrep] = useState<InterviewPrep | null>(null);
   const [prepBusy, setPrepBusy] = useState(false);
+
+  function buildParams(key: string, off: number): Record<string, string> {
+    const base = TABS.find((t) => t.key === key)?.params ?? {};
+    const params: Record<string, string> = {
+      ...base,
+      sort,
+      limit: String(PAGE),
+      offset: String(off),
+    };
+    if (q.trim()) params.q = q.trim();
+    if (source) params.source = source;
+    if (recency) params.posted_within_days = recency;
+    if (tag) params.tag = tag;
+    return params;
+  }
+
+  async function load(key: string, off: number, append: boolean) {
+    const res = await api.searchJobs(buildParams(key, off));
+    setJobs(append ? (prev) => [...prev, ...res.items] : res.items);
+    setTotal(res.total);
+    setFacets(res.facets);
+  }
+
+  // Reload whenever any filter/sort/tab/source/recency/tag changes.
+  useEffect(() => {
+    load(tab, 0, false).catch((e) => onStatus((e as Error).message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, sort, source, recency, tag]);
+
+  function runSearch() {
+    load(tab, 0, false).catch((e) => onStatus((e as Error).message));
+  }
+
+  function pickTag(t: string) {
+    setTag(t);
+    setDetail(null);
+  }
 
   function openDetail(job: Job) {
     setPrep(null);
@@ -67,35 +122,6 @@ export default function JobFeed({
     } finally {
       setPrepBusy(false);
     }
-  }
-
-  async function load(key: string, search: string, reset: boolean) {
-    const base = TABS.find((t) => t.key === key)?.params ?? {};
-    const nextOffset = reset ? 0 : offset;
-    const params: Record<string, string> = {
-      ...base,
-      limit: String(PAGE),
-      offset: String(nextOffset),
-    };
-    if (search.trim()) params.q = search.trim();
-    const batch = await api.listJobs(params);
-    setJobs(reset ? batch : [...jobs, ...batch]);
-    setOffset(nextOffset + batch.length);
-    setHasMore(batch.length === PAGE);
-  }
-
-  useEffect(() => {
-    load("all", "", true).catch((e) => onStatus((e as Error).message));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function selectTab(key: string) {
-    setTab(key);
-    load(key, q, true).catch((e) => onStatus((e as Error).message));
-  }
-
-  function search() {
-    load(tab, q, true).catch((e) => onStatus((e as Error).message));
   }
 
   async function save(job: Job) {
@@ -125,31 +151,92 @@ export default function JobFeed({
     }
   }
 
+  const facetCount = (key: string | undefined): number | null => {
+    if (!facets || !key) return null;
+    if (key === "remote") return facets.remote;
+    return facets.employment_types[key] ?? 0;
+  };
+
   return (
     <>
       <div className="row" style={{ marginBottom: 12, gap: 8 }}>
         <input
-          placeholder="Search titles, companies, skills..."
+          placeholder="Search title, company, skills, description..."
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && search()}
+          onKeyDown={(e) => e.key === "Enter" && runSearch()}
           style={{ flex: 1, minWidth: 220, marginTop: 0 }}
         />
-        <button className="btn" onClick={search}>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+          style={{ width: "auto", marginTop: 0 }}
+          title="Sort"
+        >
+          <option value="recent">Newest</option>
+          <option value="relevance">Most relevant</option>
+        </select>
+        <button className="btn" onClick={runSearch}>
           Search
         </button>
       </div>
 
+      <div className="row" style={{ marginBottom: 12, gap: 8 }}>
+        <select
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          style={{ width: "auto", marginTop: 0 }}
+          title="Source"
+        >
+          <option value="">All sources</option>
+          {facets &&
+            Object.keys(facets.sources).map((s) => (
+              <option key={s} value={s}>
+                {s} ({facets.sources[s]})
+              </option>
+            ))}
+        </select>
+        <select
+          value={recency}
+          onChange={(e) => setRecency(e.target.value)}
+          style={{ width: "auto", marginTop: 0 }}
+          title="Date posted"
+        >
+          {RECENCY.map((r) => (
+            <option key={r.value} value={r.value}>
+              {r.label}
+            </option>
+          ))}
+        </select>
+        {tag && (
+          <span className="active-filter">
+            tag: {tag}
+            <button className="link-btn" onClick={() => setTag("")}>
+              ✕
+            </button>
+          </span>
+        )}
+      </div>
+
       <div className="tabs">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            className={`tab ${tab === t.key ? "active" : ""}`}
-            onClick={() => selectTab(t.key)}
-          >
-            {t.label}
-          </button>
-        ))}
+        {TABS.map((t) => {
+          const c = facetCount(t.facet);
+          return (
+            <button
+              key={t.key}
+              className={`tab ${tab === t.key ? "active" : ""}`}
+              onClick={() => setTab(t.key)}
+            >
+              {t.label}
+              {c !== null && <span className="tab-count">{c}</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="muted" style={{ margin: "0 0 10px" }}>
+        {total} job{total === 1 ? "" : "s"}
+        {q ? ` for “${q}”` : ""}
       </div>
 
       <div className="grid">
@@ -157,11 +244,7 @@ export default function JobFeed({
           const tracked = trackedByJob[job.id];
           return (
             <div className="card" key={job.id}>
-              <h3
-                onClick={() => openDetail(job)}
-                style={{ cursor: "pointer" }}
-                title="View details"
-              >
+              <h3 onClick={() => openDetail(job)} style={{ cursor: "pointer" }}>
                 {job.title}
               </h3>
               <div className="muted">
@@ -175,7 +258,12 @@ export default function JobFeed({
               </div>
               <div style={{ marginTop: 8 }}>
                 {job.tags.slice(0, 5).map((t) => (
-                  <span className="tag" key={t}>
+                  <span
+                    className="tag clickable"
+                    key={t}
+                    onClick={() => pickTag(t)}
+                    title={`Filter by ${t}`}
+                  >
                     {t}
                   </span>
                 ))}
@@ -218,18 +306,20 @@ export default function JobFeed({
         })}
         {jobs.length === 0 && (
           <p className="muted">
-            No jobs here yet. Try “Refresh jobs” or “Load sample jobs”.
+            No jobs match. Clear filters, or try “Refresh jobs” / “Load sample jobs”.
           </p>
         )}
       </div>
 
-      {hasMore && (
+      {jobs.length < total && (
         <div style={{ textAlign: "center", marginTop: 16 }}>
           <button
             className="btn secondary"
-            onClick={() => load(tab, q, false).catch((e) => onStatus((e as Error).message))}
+            onClick={() =>
+              load(tab, jobs.length, true).catch((e) => onStatus((e as Error).message))
+            }
           >
-            Load more
+            Load more ({total - jobs.length} more)
           </button>
         </div>
       )}
@@ -250,7 +340,7 @@ export default function JobFeed({
             </div>
             <div style={{ marginTop: 10 }}>
               {detail.tags.map((t) => (
-                <span className="tag" key={t}>
+                <span className="tag clickable" key={t} onClick={() => pickTag(t)}>
                   {t}
                 </span>
               ))}
@@ -292,8 +382,8 @@ export default function JobFeed({
                   <>
                     <div className="prep-head">Likely questions</div>
                     <ul>
-                      {prep.likely_questions.map((q, i) => (
-                        <li key={i}>{q}</li>
+                      {prep.likely_questions.map((qq, i) => (
+                        <li key={i}>{qq}</li>
                       ))}
                     </ul>
                   </>

@@ -77,6 +77,18 @@ class RefreshResult(BaseModel):
     sources: dict[str, int]
 
 
+class JobFacets(BaseModel):
+    employment_types: dict[str, int] = {}
+    sources: dict[str, int] = {}
+    remote: int = 0
+
+
+class JobSearchResult(BaseModel):
+    total: int
+    items: list[JobOut] = []
+    facets: JobFacets = JobFacets()
+
+
 # ── Matching ──────────────────────────────────────────────────────────────
 class JobMatchOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)

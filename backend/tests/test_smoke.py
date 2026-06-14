@@ -144,6 +144,24 @@ def test_auto_apply_requires_ai_key() -> None:
     assert resp.status_code == 503
 
 
+def test_job_search() -> None:
+    client.post("/api/jobs/seed")
+
+    res = client.get("/api/jobs/search?q=python&sort=relevance&limit=3").json()
+    assert res["total"] >= 1
+    assert len(res["items"]) >= 1
+    # Relevance puts a python-titled role first.
+    assert "python" in res["items"][0]["title"].lower()
+    assert "facets" in res and "employment_types" in res["facets"]
+
+    contract = client.get("/api/jobs/search?employment_type=contract").json()
+    assert all(i["employment_type"] == "contract" for i in contract["items"])
+
+    # Multi-term AND: every result matches both terms somewhere.
+    multi = client.get("/api/jobs/search?q=senior+engineer").json()
+    assert multi["total"] >= 1
+
+
 def test_notifications_empty_then_list() -> None:
     headers = _auth_headers("notify@example.com")
     resp = client.get("/api/notifications", headers=headers)

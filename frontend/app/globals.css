@@ -467,6 +467,34 @@ pre {
   color: white;
 }
 
+.tab-count {
+  margin-left: 8px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.tag.clickable {
+  cursor: pointer;
+}
+
+.tag.clickable:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.active-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--accent-2);
+  border: 1px solid var(--accent-2);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
 /* ── Badges ───────────────────────────────────────────────────────────── */
 .badge {
   display: inline-block;

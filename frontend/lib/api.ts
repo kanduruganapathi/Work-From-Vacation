@@ -128,6 +128,18 @@ export interface InterviewPrep {
   summary: string | null;
 }
 
+export interface JobFacets {
+  employment_types: Record<string, number>;
+  sources: Record<string, number>;
+  remote: number;
+}
+
+export interface JobSearchResult {
+  total: number;
+  items: Job[];
+  facets: JobFacets;
+}
+
 export interface Profile {
   skills: string[];
   desired_titles: string[];
@@ -195,6 +207,10 @@ export const api = {
   listJobs: (params: Record<string, string> = {}) => {
     const qs = new URLSearchParams(params).toString();
     return request<Job[]>(`/api/jobs${qs ? `?${qs}` : ""}`);
+  },
+  searchJobs: (params: Record<string, string> = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request<JobSearchResult>(`/api/jobs/search${qs ? `?${qs}` : ""}`);
   },
   refreshJobs: () =>
     request<{ fetched: number; inserted: number; sources: Record<string, number> }>(

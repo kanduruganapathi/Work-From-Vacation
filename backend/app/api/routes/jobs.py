@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import EmploymentType, Job
-from app.schemas import JobOut, RefreshResult
-from app.services import aggregator
+from app.schemas import JobFacets, JobOut, JobSearchResult, RefreshResult
+from app.services import aggregator, search
 from app.services.sample_data import sample_jobs
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -39,6 +39,39 @@ def list_jobs(
         stmt = stmt.where(Job.source == source)
     stmt = stmt.order_by(Job.fetched_at.desc()).offset(offset).limit(limit)
     return list(db.scalars(stmt).all())
+
+
+@router.get("/search", response_model=JobSearchResult)
+def search_jobs(
+    q: str | None = Query(default=None, description="Multi-term keyword search"),
+    employment_type: EmploymentType | None = None,
+    remote: bool | None = None,
+    source: str | None = None,
+    tag: str | None = Query(default=None, description="Match a single tag/skill"),
+    posted_within_days: int | None = Query(default=None, ge=1, le=365),
+    sort: str = Query(default="recent", pattern="^(recent|relevance)$"),
+    limit: int = Query(default=24, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+) -> JobSearchResult:
+    """Rich job search with multi-term matching, filters, sorting, and facet counts."""
+    total, items, facets = search.search_jobs(
+        db,
+        q=q,
+        employment_type=employment_type,
+        remote=remote,
+        source=source,
+        tag=tag,
+        posted_within_days=posted_within_days,
+        sort=sort,
+        limit=limit,
+        offset=offset,
+    )
+    return JobSearchResult(
+        total=total,
+        items=[JobOut.model_validate(j) for j in items],
+        facets=JobFacets(**facets),
+    )
 
 
 @router.get("/{job_id}", response_model=JobOut)
