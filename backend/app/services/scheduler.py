@@ -54,8 +54,16 @@ def _run_cycle() -> None:
                         len(matches),
                         user.id,
                     )
+                # Autopilot: auto-apply to new high-fit roles within the cap.
+                applied = scoring.run_autopilot(db, user)
+                if applied:
+                    logger.info(
+                        "Autopilot auto-applied to %d roles for user %s",
+                        len(applied),
+                        user.id,
+                    )
             except Exception as exc:
-                logger.warning("Scoring failed for user %s: %s", user.id, exc)
+                logger.warning("Scoring/autopilot failed for user %s: %s", user.id, exc)
     finally:
         db.close()
 

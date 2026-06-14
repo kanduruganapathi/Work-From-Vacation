@@ -23,6 +23,12 @@ The frontend ships with an animated **three.js** background (a rotating globe of
 remote-job nodes) for a polished, product-grade landing and dashboard.
 
 ### Automation
+- **Auto-apply autopilot** — set a minimum match score and a daily cap; the
+  scheduler then auto-applies (tailored resume + cover letter) to new high-fit
+  roles on its own, respecting the cap.
+- **Actionable materials** — the AI-tailored resume and cover letter on each
+  application can be viewed, **edited, copied, downloaded, or regenerated** from
+  the tracker.
 - **Background AI tasks** — the orchestrated hunt, new-job scoring, and batch
   auto-apply run as background jobs with **live progress** (poll `/api/ai/tasks/{id}`).
 - **Scheduler** — when `SCHEDULER_ENABLED=true`, periodically refreshes jobs,

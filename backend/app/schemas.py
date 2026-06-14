@@ -41,6 +41,9 @@ class ProfileIn(BaseModel):
     remote_only: bool = True
     min_salary: int | None = None
     years_experience: int | None = None
+    autopilot_enabled: bool = False
+    autopilot_min_score: int = Field(default=85, ge=0, le=100)
+    autopilot_daily_limit: int = Field(default=5, ge=1, le=50)
 
 
 class ProfileOut(ProfileIn):

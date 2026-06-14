@@ -171,6 +171,41 @@ def test_async_ai_endpoints_require_ai_key() -> None:
     )
 
 
+def test_autopilot_gating_and_daily_count() -> None:
+    from app.database import SessionLocal
+    from app.models import Application, ApplicationStatus, Job, Profile, User
+    from app.services import scoring
+
+    db = SessionLocal()
+    try:
+        user = User(email=f"pilot{__import__('random').randint(0, 99999)}@x.com",
+                    hashed_password="x")
+        db.add(user)
+        db.flush()
+        # Autopilot off -> no-op.
+        user.profile = Profile(user_id=user.id, autopilot_enabled=False)
+        db.flush()
+        assert scoring.run_autopilot(db, user) == []
+
+        # Daily count reflects created applications.
+        job = db.scalar(__import__("sqlalchemy").select(Job).limit(1)) or Job(
+            source="t", external_id="t1", title="T"
+        )
+        if job.id is None:
+            db.add(job)
+            db.flush()
+        db.add(
+            Application(
+                user_id=user.id, job_id=job.id, status=ApplicationStatus.applied
+            )
+        )
+        db.flush()
+        assert scoring.applications_today(db, user) >= 1
+    finally:
+        db.rollback()
+        db.close()
+
+
 class _StubSource(JobSource):
     name = "stub"
 

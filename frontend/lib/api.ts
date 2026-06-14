@@ -139,6 +139,9 @@ export interface Profile {
   resume_text?: string | null;
   min_salary?: number | null;
   years_experience?: number | null;
+  autopilot_enabled: boolean;
+  autopilot_min_score: number;
+  autopilot_daily_limit: number;
 }
 
 // ── Endpoints ───────────────────────────────────────────────────────────
@@ -253,7 +256,9 @@ export const api = {
     }),
   updateApplication: (
     id: number,
-    patch: Partial<Pick<Application, "status" | "notes">>
+    patch: Partial<
+      Pick<Application, "status" | "notes" | "tailored_resume" | "cover_letter">
+    >
   ) =>
     request<Application>(`/api/applications/${id}`, {
       method: "PATCH",

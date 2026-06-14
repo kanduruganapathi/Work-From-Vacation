@@ -25,6 +25,9 @@ const EMPTY_PROFILE: Profile = {
   headline: "",
   summary: "",
   resume_text: "",
+  autopilot_enabled: false,
+  autopilot_min_score: 85,
+  autopilot_daily_limit: 5,
 };
 
 export default function Home() {
@@ -526,6 +529,71 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         </div>
       </div>
 
+      {/* Autopilot */}
+      <h2 className="section-title">Auto-apply autopilot</h2>
+      <div className="card">
+        <div className="row" style={{ justifyContent: "space-between" }}>
+          <div>
+            <strong>Apply automatically to new high-fit roles</strong>
+            <p className="muted" style={{ margin: "4px 0 0" }}>
+              When on, the scheduler scores new jobs and auto-applies (tailored
+              resume + cover letter) to matches above your threshold, up to your
+              daily cap.
+            </p>
+          </div>
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={profile.autopilot_enabled}
+              onChange={(e) =>
+                setProfile({ ...profile, autopilot_enabled: e.target.checked })
+              }
+            />
+            <span className="slider" />
+          </label>
+        </div>
+        <div className="row" style={{ gap: 20, marginTop: 12 }}>
+          <div style={{ flex: 1, minWidth: 160 }}>
+            <label>Minimum match score: {profile.autopilot_min_score}</label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={profile.autopilot_min_score}
+              onChange={(e) =>
+                setProfile({
+                  ...profile,
+                  autopilot_min_score: Number(e.target.value),
+                })
+              }
+            />
+          </div>
+          <div style={{ flex: 1, minWidth: 160 }}>
+            <label>Max applications per day</label>
+            <input
+              type="number"
+              min={1}
+              max={50}
+              value={profile.autopilot_daily_limit}
+              onChange={(e) =>
+                setProfile({
+                  ...profile,
+                  autopilot_daily_limit: Number(e.target.value),
+                })
+              }
+            />
+          </div>
+        </div>
+        <div className="row" style={{ marginTop: 12 }}>
+          <button className="btn" onClick={saveProfile} disabled={busy}>
+            Save autopilot
+          </button>
+          <span className={`pill ${profile.autopilot_enabled ? "on" : "off"}`}>
+            Autopilot {profile.autopilot_enabled ? "ON" : "off"}
+          </span>
+        </div>
+      </div>
+
       {/* Matches */}
       {matches.length > 0 && (
         <>
@@ -568,6 +636,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       <h2 className="section-title">Application tracker</h2>
       <ApplicationsBoard
         applications={applications}
+        aiEnabled={aiEnabled}
         onChanged={() => reloadApplications().catch(() => {})}
         onStatus={setStatus}
       />

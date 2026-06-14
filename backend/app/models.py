@@ -96,6 +96,12 @@ class Profile(Base):
     min_salary: Mapped[int | None] = mapped_column(nullable=True)
     years_experience: Mapped[int | None] = mapped_column(nullable=True)
 
+    # Auto-apply autopilot: when enabled, the scheduler auto-applies to new
+    # matches at/above ``autopilot_min_score``, up to ``autopilot_daily_limit``.
+    autopilot_enabled: Mapped[bool] = mapped_column(default=False)
+    autopilot_min_score: Mapped[int] = mapped_column(default=85)
+    autopilot_daily_limit: Mapped[int] = mapped_column(default=5)
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
     )
