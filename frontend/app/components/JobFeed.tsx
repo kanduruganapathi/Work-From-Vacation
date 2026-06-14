@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, Application, ApplicationStatus, Job } from "@/lib/api";
+import {
+  api,
+  Application,
+  ApplicationStatus,
+  InterviewPrep,
+  Job,
+} from "@/lib/api";
 
 const PAGE = 24;
 
@@ -42,6 +48,26 @@ export default function JobFeed({
   const [hasMore, setHasMore] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [detail, setDetail] = useState<Job | null>(null);
+  const [prep, setPrep] = useState<InterviewPrep | null>(null);
+  const [prepBusy, setPrepBusy] = useState(false);
+
+  function openDetail(job: Job) {
+    setPrep(null);
+    setDetail(job);
+  }
+
+  async function getPrep(job: Job) {
+    setPrepBusy(true);
+    onStatus(`🎤 Preparing interview questions for “${job.title}”...`);
+    try {
+      setPrep(await api.interviewPrep(job.id));
+      onStatus("Interview prep ready.");
+    } catch (e) {
+      onStatus((e as Error).message);
+    } finally {
+      setPrepBusy(false);
+    }
+  }
 
   async function load(key: string, search: string, reset: boolean) {
     const base = TABS.find((t) => t.key === key)?.params ?? {};
@@ -132,7 +158,7 @@ export default function JobFeed({
           return (
             <div className="card" key={job.id}>
               <h3
-                onClick={() => setDetail(job)}
+                onClick={() => openDetail(job)}
                 style={{ cursor: "pointer" }}
                 title="View details"
               >
@@ -183,7 +209,7 @@ export default function JobFeed({
                     </button>
                   </>
                 )}
-                <button className="link-btn" onClick={() => setDetail(job)}>
+                <button className="link-btn" onClick={() => openDetail(job)}>
                   Details
                 </button>
               </div>
@@ -244,12 +270,56 @@ export default function JobFeed({
                   🤖 Auto-apply
                 </button>
               )}
+              <button
+                className="btn secondary"
+                onClick={() => getPrep(detail)}
+                disabled={prepBusy || !aiEnabled}
+                title={aiEnabled ? "" : "Set ANTHROPIC_API_KEY on the server"}
+              >
+                🎤 Interview prep
+              </button>
               {detail.url && (
                 <a href={detail.url} target="_blank" rel="noreferrer">
                   Open original posting →
                 </a>
               )}
             </div>
+
+            {prep && (
+              <div className="prep">
+                {prep.summary && <p style={{ fontSize: 14 }}>{prep.summary}</p>}
+                {prep.likely_questions.length > 0 && (
+                  <>
+                    <div className="prep-head">Likely questions</div>
+                    <ul>
+                      {prep.likely_questions.map((q, i) => (
+                        <li key={i}>{q}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {prep.talking_points.length > 0 && (
+                  <>
+                    <div className="prep-head">Talking points</div>
+                    <ul>
+                      {prep.talking_points.map((p, i) => (
+                        <li key={i}>{p}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {prep.focus_areas.length > 0 && (
+                  <>
+                    <div className="prep-head">Brush up on</div>
+                    <ul>
+                      {prep.focus_areas.map((f, i) => (
+                        <li key={i}>{f}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

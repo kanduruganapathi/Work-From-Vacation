@@ -7,10 +7,14 @@ import {
   clearToken,
   getToken,
   JobMatch,
+  Notification,
+  pollTask,
   Profile,
+  Task,
 } from "@/lib/api";
 import JobFeed from "./components/JobFeed";
 import ApplicationsBoard from "./components/Applications";
+import NotificationBell from "./components/NotificationBell";
 
 const EMPTY_PROFILE: Profile = {
   skills: [],
@@ -123,9 +127,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [feedKey, setFeedKey] = useState(0); // bump to reload the job feed
+  const [task, setTask] = useState<Task | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   async function reloadApplications() {
     setApplications(await api.listApplications());
+  }
+
+  async function reloadNotifications() {
+    setNotifications(await api.notifications());
   }
 
   useEffect(() => {
@@ -135,8 +145,37 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       setAiEnabled((await api.aiStatus()).enabled);
       setMatches(await api.matches());
       await reloadApplications();
+      await reloadNotifications();
     })().catch((e) => setStatus((e as Error).message));
   }, []);
+
+  // Run a background AI task and reflect its progress live.
+  async function runTask(
+    start: () => Promise<Task>,
+    onDone?: () => Promise<void>
+  ) {
+    if (!aiEnabled) {
+      setStatus("AI is disabled. Set ANTHROPIC_API_KEY on the server.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const created = await start();
+      setTask(created);
+      const final = await pollTask(created.id, setTask);
+      setStatus(final.message || "Done.");
+      setMatches(await api.matches());
+      await reloadApplications();
+      await reloadNotifications();
+      if (onDone) await onDone();
+      setTimeout(() => setTask(null), 2500);
+    } catch (e) {
+      setStatus((e as Error).message);
+      setTask(null);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   // Map of job_id -> application, so job cards can show tracking state.
   const trackedByJob: Record<number, Application> = {};
@@ -208,22 +247,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   }
 
-  async function runHunt() {
-    setBusy(true);
-    setStatus("Running the AI agents — searching, scoring, summarizing...");
-    try {
-      const r = await api.runHunt(
+  const runHunt = () =>
+    runTask(() =>
+      api.runHuntAsync(
         "Find and score the best jobs for me and suggest how to improve my search.",
         15
-      );
-      setStatus(r.summary);
-      setMatches(r.matches);
-    } catch (e) {
-      setStatus((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
+      )
+    );
+  const scoreNew = () => runTask(() => api.scoreNew());
+  const batchApply = () => runTask(() => api.batchApply(80, 5));
 
   const list = (v: string[]) => v.join(", ");
   const parse = (s: string) =>
@@ -240,10 +272,31 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             AI {aiEnabled ? "ready" : "disabled"}
           </span>
         </div>
-        <button className="btn secondary" onClick={logout}>
-          Log out
-        </button>
+        <div className="row">
+          <NotificationBell
+            notifications={notifications}
+            onChanged={() => reloadNotifications().catch(() => {})}
+          />
+          <button className="btn secondary" onClick={logout}>
+            Log out
+          </button>
+        </div>
       </div>
+
+      {task && (task.status === "running" || task.status === "queued") && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <strong>🤖 {task.kind.replace("_", " ")}</strong>
+            <span className="muted">{task.progress}%</span>
+          </div>
+          <div className="progress">
+            <div className="progress-fill" style={{ width: `${task.progress}%` }} />
+          </div>
+          <div className="muted" style={{ marginTop: 6 }}>
+            {task.message}
+          </div>
+        </div>
+      )}
 
       {status && (
         <div className="card" style={{ marginTop: 16 }}>
@@ -333,6 +386,22 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             title={aiEnabled ? "" : "Set ANTHROPIC_API_KEY on the server"}
           >
             🤖 Run AI job hunt
+          </button>
+          <button
+            className="btn"
+            onClick={scoreNew}
+            disabled={busy || !aiEnabled}
+            title={aiEnabled ? "" : "Set ANTHROPIC_API_KEY on the server"}
+          >
+            ⚡ Score new jobs
+          </button>
+          <button
+            className="btn"
+            onClick={batchApply}
+            disabled={busy || !aiEnabled}
+            title={aiEnabled ? "" : "Set ANTHROPIC_API_KEY on the server"}
+          >
+            🚀 Auto-apply top matches
           </button>
         </div>
       </div>

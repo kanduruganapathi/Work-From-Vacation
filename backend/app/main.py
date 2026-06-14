@@ -9,9 +9,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.agents.client import ai_enabled
-from app.api.routes import agents, applications, auth, jobs, profiles
+from app.api.routes import (
+    agents,
+    applications,
+    auth,
+    jobs,
+    notifications,
+    profiles,
+)
 from app.config import settings
 from app.database import init_db
+from app.services import scheduler
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,7 +27,11 @@ logging.basicConfig(level=logging.INFO)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    yield
+    scheduler.start()
+    try:
+        yield
+    finally:
+        scheduler.shutdown()
 
 
 app = FastAPI(
@@ -42,6 +54,7 @@ app.include_router(profiles.router)
 app.include_router(jobs.router)
 app.include_router(applications.router)
 app.include_router(agents.router)
+app.include_router(notifications.router)
 
 
 @app.get("/health", tags=["meta"])

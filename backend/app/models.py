@@ -42,6 +42,19 @@ class ApplicationStatus(str, enum.Enum):
     withdrawn = "withdrawn"
 
 
+class TaskStatus(str, enum.Enum):
+    queued = "queued"
+    running = "running"
+    done = "done"
+    error = "error"
+
+
+class TaskKind(str, enum.Enum):
+    job_hunt = "job_hunt"
+    batch_apply = "batch_apply"
+    auto_score = "auto_score"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -176,3 +189,42 @@ class Application(Base):
 
     user: Mapped[User] = relationship(back_populates="applications")
     job: Mapped[Job] = relationship()
+
+
+class Task(Base):
+    """An asynchronous background job (AI hunt, batch apply, scoring) the user
+    can poll for progress."""
+
+    __tablename__ = "tasks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    kind: Mapped[TaskKind] = mapped_column(Enum(TaskKind))
+    status: Mapped[TaskStatus] = mapped_column(
+        Enum(TaskStatus), default=TaskStatus.queued
+    )
+    progress: Mapped[int] = mapped_column(default=0)  # 0-100
+    message: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
+    )
+
+
+class Notification(Base):
+    """An in-app alert (e.g. a new high-fit match)."""
+
+    __tablename__ = "notifications"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    type: Mapped[str] = mapped_column(String(64), default="match")
+    title: Mapped[str] = mapped_column(String(255))
+    body: Mapped[str | None] = mapped_column(Text, nullable=True)
+    job_id: Mapped[int | None] = mapped_column(
+        ForeignKey("jobs.id"), nullable=True
+    )
+    read: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

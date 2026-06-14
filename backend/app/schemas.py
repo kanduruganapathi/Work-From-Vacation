@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.models import ApplicationStatus, EmploymentType
+from app.models import ApplicationStatus, EmploymentType, TaskKind, TaskStatus
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────
@@ -160,3 +160,45 @@ class AgentRunResponse(BaseModel):
 class AutoApplyRequest(BaseModel):
     job_id: int
     tone: str = "professional"
+
+
+# ── Background tasks ──────────────────────────────────────────────────────
+class TaskOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    kind: TaskKind
+    status: TaskStatus
+    progress: int
+    message: str | None = None
+    result: dict | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class BatchApplyRequest(BaseModel):
+    min_score: int = Field(default=80, ge=0, le=100)
+    limit: int = Field(default=5, ge=1, le=20)
+
+
+# ── Notifications ─────────────────────────────────────────────────────────
+class NotificationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    type: str
+    title: str
+    body: str | None = None
+    job_id: int | None = None
+    read: bool
+    created_at: datetime
+
+
+# ── Interview prep ────────────────────────────────────────────────────────
+class InterviewPrepRequest(BaseModel):
+    job_id: int
+
+
+class InterviewPrepResponse(BaseModel):
+    likely_questions: list[str] = []
+    talking_points: list[str] = []
+    focus_areas: list[str] = []
+    summary: str | None = None

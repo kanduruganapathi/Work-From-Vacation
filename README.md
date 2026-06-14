@@ -22,6 +22,17 @@ application — so you can find your next role while you're, well, on vacation.
 The frontend ships with an animated **three.js** background (a rotating globe of
 remote-job nodes) for a polished, product-grade landing and dashboard.
 
+### Automation
+- **Background AI tasks** — the orchestrated hunt, new-job scoring, and batch
+  auto-apply run as background jobs with **live progress** (poll `/api/ai/tasks/{id}`).
+- **Scheduler** — when `SCHEDULER_ENABLED=true`, periodically refreshes jobs,
+  AI-scores each user's new listings, and raises **match alerts** above
+  `ALERT_MATCH_THRESHOLD`.
+- **In-app notifications** (bell) for new high-fit matches and auto-applies;
+  optional **email** alerts when SMTP is configured.
+- **Interview-prep agent** — likely questions, talking points, and focus areas
+  tailored to a role, from the job detail view.
+
 ## 🏗️ Architecture
 
 ```

@@ -384,8 +384,97 @@ pre {
   line-height: 1.6;
   color: var(--text);
   white-space: pre-wrap;
-  max-height: 46vh;
+  max-height: 38vh;
   overflow: auto;
   border-top: 1px solid var(--border);
   padding-top: 12px;
+}
+
+/* ── Progress bar ─────────────────────────────────────────────────────── */
+.progress {
+  height: 8px;
+  background: var(--panel-2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 0.4s ease;
+}
+
+/* ── Notification bell ────────────────────────────────────────────────── */
+.bell-wrap {
+  position: relative;
+}
+
+.bell-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--danger);
+  color: white;
+  border-radius: 999px;
+  font-size: 11px;
+  min-width: 18px;
+  height: 18px;
+  line-height: 18px;
+  text-align: center;
+  padding: 0 4px;
+}
+
+.bell-panel {
+  position: absolute;
+  right: 0;
+  top: 46px;
+  width: 320px;
+  max-height: 420px;
+  overflow: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  z-index: 60;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.bell-item {
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+
+.bell-item:hover {
+  background: var(--panel-2);
+}
+
+.bell-item.unread {
+  border-left: 3px solid var(--accent);
+}
+
+/* ── Interview prep ───────────────────────────────────────────────────── */
+.prep {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.prep-head {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--accent-2);
+  margin-top: 10px;
+}
+
+.prep ul {
+  margin: 6px 0;
+  padding-left: 18px;
+  font-size: 14px;
+}
+
+.prep li {
+  margin-bottom: 4px;
 }

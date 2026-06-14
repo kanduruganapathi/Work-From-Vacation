@@ -100,6 +100,34 @@ export interface Application {
   job: Job;
 }
 
+export type TaskStatus = "queued" | "running" | "done" | "error";
+
+export interface Task {
+  id: number;
+  kind: string;
+  status: TaskStatus;
+  progress: number;
+  message: string | null;
+  result: Record<string, unknown> | null;
+}
+
+export interface Notification {
+  id: number;
+  type: string;
+  title: string;
+  body: string | null;
+  job_id: number | null;
+  read: boolean;
+  created_at: string;
+}
+
+export interface InterviewPrep {
+  likely_questions: string[];
+  talking_points: string[];
+  focus_areas: string[];
+  summary: string | null;
+}
+
 export interface Profile {
   skills: string[];
   desired_titles: string[];
@@ -183,6 +211,33 @@ export const api = {
       body: JSON.stringify({ instruction, max_jobs }),
     }),
   matches: () => request<JobMatch[]>("/api/ai/matches"),
+
+  // Background AI tasks
+  runHuntAsync: (instruction: string, max_jobs = 15) =>
+    request<Task>("/api/ai/run-async", {
+      method: "POST",
+      body: JSON.stringify({ instruction, max_jobs }),
+    }),
+  scoreNew: () => request<Task>("/api/ai/score-new", { method: "POST" }),
+  batchApply: (min_score = 80, limit = 5) =>
+    request<Task>("/api/ai/batch-apply", {
+      method: "POST",
+      body: JSON.stringify({ min_score, limit }),
+    }),
+  getTask: (id: number) => request<Task>(`/api/ai/tasks/${id}`),
+  interviewPrep: (job_id: number) =>
+    request<InterviewPrep>("/api/ai/interview-prep", {
+      method: "POST",
+      body: JSON.stringify({ job_id }),
+    }),
+
+  // Notifications
+  notifications: () => request<Notification[]>("/api/notifications"),
+  markRead: (id: number) =>
+    request<Notification>(`/api/notifications/${id}/read`, { method: "POST" }),
+  markAllRead: () =>
+    request<void>("/api/notifications/read-all", { method: "POST" }),
+
   autoApply: (job_id: number) =>
     request<Application>("/api/ai/auto-apply", {
       method: "POST",
@@ -217,3 +272,17 @@ export const api = {
       body: JSON.stringify({ job_id }),
     }),
 };
+
+// Poll a background task until it finishes, calling onUpdate on each tick.
+export async function pollTask(
+  id: number,
+  onUpdate: (t: Task) => void,
+  intervalMs = 1500
+): Promise<Task> {
+  for (;;) {
+    const t = await api.getTask(id);
+    onUpdate(t);
+    if (t.status === "done" || t.status === "error") return t;
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+}

@@ -144,6 +144,33 @@ def test_auto_apply_requires_ai_key() -> None:
     assert resp.status_code == 503
 
 
+def test_notifications_empty_then_list() -> None:
+    headers = _auth_headers("notify@example.com")
+    resp = client.get("/api/notifications", headers=headers)
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+def test_async_ai_endpoints_require_ai_key() -> None:
+    headers = _auth_headers("async@example.com")
+    client.post("/api/jobs/seed")
+    job_id = client.get("/api/jobs?source=sample&limit=1").json()[0]["id"]
+    assert (
+        client.post("/api/ai/run-async", json={"instruction": "go"}, headers=headers).status_code
+        == 503
+    )
+    assert client.post("/api/ai/score-new", headers=headers).status_code == 503
+    assert (
+        client.post("/api/ai/batch-apply", json={}, headers=headers).status_code == 503
+    )
+    assert (
+        client.post(
+            "/api/ai/interview-prep", json={"job_id": job_id}, headers=headers
+        ).status_code
+        == 503
+    )
+
+
 class _StubSource(JobSource):
     name = "stub"
 

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.agents import (
     cover_letter_agent,
+    interview_agent,
     orchestrator,
     resume_agent,
     strategy_agent,
@@ -15,19 +16,32 @@ from app.agents import (
 from app.agents.client import AgentConfigError, ai_enabled
 from app.api.deps import get_current_user
 from app.database import get_db
-from app.models import Application, ApplicationStatus, Job, JobMatch, User
+from app.models import (
+    Application,
+    ApplicationStatus,
+    Job,
+    JobMatch,
+    Task,
+    TaskKind,
+    User,
+)
 from app.schemas import (
     AgentRunRequest,
     AgentRunResponse,
     ApplicationOut,
     AutoApplyRequest,
+    BatchApplyRequest,
     CoverLetterRequest,
     CoverLetterResponse,
+    InterviewPrepRequest,
+    InterviewPrepResponse,
     JobMatchOut,
     SearchStrategyResponse,
     TailorResumeRequest,
     TailorResumeResponse,
+    TaskOut,
 )
+from app.services import tasks
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -86,6 +100,71 @@ def run_orchestrator(
         summary=summary,
         matches=[JobMatchOut.model_validate(m) for m in matches],
     )
+
+
+@router.post("/run-async", response_model=TaskOut)
+def run_orchestrator_async(
+    payload: AgentRunRequest,
+    current_user: User = Depends(get_current_user),
+) -> Task:
+    """Kick off the orchestrated hunt in the background. Poll GET /api/ai/tasks/{id}."""
+    _require_ai()
+    _require_profile(current_user)
+    return tasks.create_task(
+        current_user.id,
+        TaskKind.job_hunt,
+        {"instruction": payload.instruction, "max_jobs": payload.max_jobs},
+    )
+
+
+@router.post("/score-new", response_model=TaskOut)
+def score_new(
+    current_user: User = Depends(get_current_user),
+) -> Task:
+    """Background-score the user's newest unscored jobs and raise match alerts."""
+    _require_ai()
+    _require_profile(current_user)
+    return tasks.create_task(current_user.id, TaskKind.auto_score, {})
+
+
+@router.post("/batch-apply", response_model=TaskOut)
+def batch_apply(
+    payload: BatchApplyRequest,
+    current_user: User = Depends(get_current_user),
+) -> Task:
+    """Background auto-apply to the user's top matches above a score threshold."""
+    _require_ai()
+    _require_profile(current_user)
+    return tasks.create_task(
+        current_user.id,
+        TaskKind.batch_apply,
+        {"min_score": payload.min_score, "limit": payload.limit},
+    )
+
+
+@router.get("/tasks/{task_id}", response_model=TaskOut)
+def get_task(
+    task_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Task:
+    task = db.get(Task, task_id)
+    if not task or task.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
+
+@router.post("/interview-prep", response_model=InterviewPrepResponse)
+def interview_prep(
+    payload: InterviewPrepRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> InterviewPrepResponse:
+    _require_ai()
+    _require_profile(current_user)
+    job = _get_job(db, payload.job_id)
+    data = interview_agent.prepare(current_user.profile, job)
+    return InterviewPrepResponse(**data)
 
 
 @router.get("/matches", response_model=list[JobMatchOut])

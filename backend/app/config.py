@@ -27,6 +27,21 @@ class Settings(BaseSettings):
     adzuna_app_id: str | None = None
     adzuna_app_key: str | None = None
 
+    # Background scheduler (periodic refresh + auto-scoring + alerts)
+    scheduler_enabled: bool = False
+    scheduler_refresh_minutes: int = 60
+    # New matches at or above this score raise an alert.
+    alert_match_threshold: int = 75
+    # Per-run cap on jobs scored per user (cost control).
+    auto_score_limit: int = 10
+
+    # Optional SMTP for email alerts. If unset, alerts are in-app only.
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str | None = None
+
     # CORS
     cors_origins: list[str] = ["http://localhost:3000"]
 
