@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-claude-opus-4-8}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/work_from_vacation.db}
+      SECRET_KEY: ${SECRET_KEY:-change-me}
+      ADZUNA_APP_ID: ${ADZUNA_APP_ID:-}
+      ADZUNA_APP_KEY: ${ADZUNA_APP_KEY:-}
+    volumes:
+      - backend_data:/data
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:
