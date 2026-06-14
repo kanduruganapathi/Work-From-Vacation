@@ -66,54 +66,154 @@ function Landing({ onAuthed }: { onAuthed: () => void }) {
     }
   }
 
+  const scrollToAuth = () => {
+    document.getElementById("auth")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const FEATURES = [
+    {
+      icon: "🌐",
+      title: "Aggregate everything",
+      body: "Full-time, contract, freelance, and remote roles from many sources, deduped into one feed.",
+    },
+    {
+      icon: "🎯",
+      title: "AI match scoring",
+      body: "A multi-agent pipeline scores every job against your profile — with reasons and red flags.",
+    },
+    {
+      icon: "🤖",
+      title: "Auto-apply",
+      body: "The AI tailors your resume and drafts a cover letter per role, then tracks the application.",
+    },
+    {
+      icon: "🔔",
+      title: "Alerts on autopilot",
+      body: "Get notified the moment a new high-fit role appears — even while you're away.",
+    },
+  ];
+
+  const STEPS = [
+    { n: 1, t: "Build your profile", d: "Upload your resume (PDF) and set your skills, titles, and preferences." },
+    { n: 2, t: "Let the agents run", d: "Aggregate jobs, then run the AI hunt to score and rank the best matches." },
+    { n: 3, t: "Apply & track", d: "Auto-apply to top roles and watch them move across your pipeline." },
+  ];
+
   return (
     <div className="container">
-      <div className="hero">
-        <h1>Find your next role while you&apos;re on vacation.</h1>
+      <section className="hero">
+        <div className="hero-badges">
+          {["Full-time", "Contract", "Freelance", "Remote"].map((c) => (
+            <span className="chip" key={c}>
+              {c}
+            </span>
+          ))}
+        </div>
+        <h1>
+          Find your next role <span className="grad">while you&apos;re on vacation.</span>
+        </h1>
         <p>
-          Work From Vacation aggregates full-time, contract, freelance, and remote
-          jobs, then runs a multi-agent AI pipeline to match, tailor, and track
-          every opportunity for you.
+          Work From Vacation aggregates jobs across every employment type, then runs
+          a multi-agent AI pipeline to match, tailor, and track every opportunity —
+          so your job hunt runs itself.
         </p>
-      </div>
-      <div className="card" style={{ maxWidth: 420, margin: "0 auto" }}>
-        <div className="row" style={{ marginBottom: 8 }}>
-          <button
-            className={`btn ${mode === "register" ? "" : "secondary"}`}
-            onClick={() => setMode("register")}
-          >
-            Create account
+        <div className="hero-cta">
+          <button className="btn btn-lg" onClick={scrollToAuth}>
+            Get started — it&apos;s free
           </button>
           <button
-            className={`btn ${mode === "login" ? "" : "secondary"}`}
-            onClick={() => setMode("login")}
+            className="btn secondary btn-lg"
+            onClick={() =>
+              document
+                .getElementById("how")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
           >
-            Log in
+            How it works
           </button>
         </div>
-        <label>Email</label>
-        <input value={email} onChange={(e) => setEmail(e.target.value)} />
-        <label>Password</label>
-        <input
-          type="password"
-          value={password}
-          minLength={8}
-          placeholder="At least 8 characters"
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && submit()}
-        />
-        {mode === "register" && (
-          <p className="muted" style={{ marginTop: 6 }}>
-            Use at least 8 characters.
-          </p>
-        )}
-        {error && <p className="error">{error}</p>}
-        <div style={{ marginTop: 16 }}>
-          <button className="btn" onClick={submit} disabled={busy}>
-            {busy ? "..." : mode === "register" ? "Get started" : "Log in"}
-          </button>
+      </section>
+
+      <section className="features">
+        {FEATURES.map((f) => (
+          <div className="feature-card" key={f.title}>
+            <div className="feature-icon">{f.icon}</div>
+            <h3>{f.title}</h3>
+            <p className="muted">{f.body}</p>
+          </div>
+        ))}
+      </section>
+
+      <section id="how" className="steps-section">
+        <h2 className="landing-h2">How it works</h2>
+        <div className="steps">
+          {STEPS.map((s) => (
+            <div className="step" key={s.n}>
+              <div className="step-num">{s.n}</div>
+              <div>
+                <strong>{s.t}</strong>
+                <p className="muted" style={{ margin: "4px 0 0" }}>
+                  {s.d}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+      </section>
+
+      <section id="auth">
+        <h2 className="landing-h2">
+          {mode === "register" ? "Create your free account" : "Welcome back"}
+        </h2>
+        <div className="auth-card">
+          <div className="auth-toggle">
+            <button
+              className={`tab ${mode === "register" ? "active" : ""}`}
+              onClick={() => setMode("register")}
+            >
+              Create account
+            </button>
+            <button
+              className={`tab ${mode === "login" ? "active" : ""}`}
+              onClick={() => setMode("login")}
+            >
+              Log in
+            </button>
+          </div>
+          <label>Email</label>
+          <input value={email} onChange={(e) => setEmail(e.target.value)} />
+          <label>Password</label>
+          <input
+            type="password"
+            value={password}
+            minLength={8}
+            placeholder="At least 8 characters"
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submit()}
+          />
+          {mode === "register" && (
+            <p className="muted" style={{ marginTop: 6 }}>
+              Use at least 8 characters.
+            </p>
+          )}
+          {error && <p className="error">{error}</p>}
+          <div style={{ marginTop: 16 }}>
+            <button
+              className="btn btn-lg"
+              onClick={submit}
+              disabled={busy}
+              style={{ width: "100%" }}
+            >
+              {busy ? "..." : mode === "register" ? "Get started" : "Log in"}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <footer className="landing-foot muted">
+        Work From Vacation · automated job search across full-time, contract,
+        freelance &amp; remote
+      </footer>
     </div>
   );
 }
@@ -281,6 +381,26 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             Log out
           </button>
         </div>
+      </div>
+
+      <div className="stats">
+        {[
+          { label: "AI matches", value: matches.length },
+          { label: "Applications", value: applications.length },
+          {
+            label: "Interviewing",
+            value: applications.filter((a) => a.status === "interviewing").length,
+          },
+          {
+            label: "Unread alerts",
+            value: notifications.filter((n) => !n.read).length,
+          },
+        ].map((s) => (
+          <div className="stat" key={s.label}>
+            <div className="stat-value">{s.value}</div>
+            <div className="muted">{s.label}</div>
+          </div>
+        ))}
       </div>
 
       {task && (task.status === "running" || task.status === "queued") && (
