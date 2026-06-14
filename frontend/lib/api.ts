@@ -1,7 +1,10 @@
 // Lightweight API client for the Work From Vacation backend.
 
-const BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+// Default to same-origin: requests go to "/api/..." on the frontend, which
+// Next.js proxies to the backend (see next.config.js rewrites). This avoids
+// CORS and works behind remote previews / tunnels. Override only if you want
+// the browser to hit the backend directly.
+const BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 const TOKEN_KEY = "wfv_token";
 

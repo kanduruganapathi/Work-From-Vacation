@@ -18,7 +18,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+      # Server-side proxy target — the browser only ever calls the frontend
+      # origin, which Next.js forwards to the backend service. No CORS needed.
+      BACKEND_ORIGIN: ${BACKEND_ORIGIN:-http://backend:8000}
     depends_on:
       - backend
 
