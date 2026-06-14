@@ -227,3 +227,129 @@ pre {
   color: var(--danger);
   font-size: 13px;
 }
+
+/* ── Tabs ─────────────────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.tab {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+/* ── Badges ───────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 9px;
+  border-radius: 6px;
+  margin-right: 6px;
+  border: 1px solid var(--border);
+  text-transform: capitalize;
+}
+
+.badge.remote {
+  color: var(--accent-2);
+  border-color: var(--accent-2);
+}
+.badge.type-full_time {
+  color: #6fb3f0;
+  border-color: #6fb3f0;
+}
+.badge.type-contract {
+  color: #e0a96c;
+  border-color: #e0a96c;
+}
+.badge.type-freelance {
+  color: #b48ce0;
+  border-color: #b48ce0;
+}
+.badge.type-part_time {
+  color: #8ce0c4;
+  border-color: #8ce0c4;
+}
+
+/* Application status colors */
+.badge.status-saved {
+  color: #9aa3b0;
+}
+.badge.status-applied {
+  color: #6fb3f0;
+  border-color: #6fb3f0;
+}
+.badge.status-interviewing {
+  color: #e0a96c;
+  border-color: #e0a96c;
+}
+.badge.status-offer {
+  color: var(--accent-2);
+  border-color: var(--accent-2);
+}
+.badge.status-rejected {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.badge.status-withdrawn {
+  color: #8a909c;
+}
+
+/* ── Application board (kanban) ───────────────────────────────────────── */
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.board-col {
+  background: rgba(23, 26, 33, 0.5);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 80px;
+}
+
+.board-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.app-card {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 6px 0 0;
+}

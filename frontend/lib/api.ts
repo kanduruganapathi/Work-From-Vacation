@@ -80,6 +80,26 @@ export interface JobMatch {
   job: Job;
 }
 
+export type ApplicationStatus =
+  | "saved"
+  | "applied"
+  | "interviewing"
+  | "offer"
+  | "rejected"
+  | "withdrawn";
+
+export interface Application {
+  id: number;
+  job_id: number;
+  status: ApplicationStatus;
+  tailored_resume: string | null;
+  cover_letter: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  job: Job;
+}
+
 export interface Profile {
   skills: string[];
   desired_titles: string[];
@@ -145,6 +165,29 @@ export const api = {
       body: JSON.stringify({ instruction, max_jobs }),
     }),
   matches: () => request<JobMatch[]>("/api/ai/matches"),
+  autoApply: (job_id: number) =>
+    request<Application>("/api/ai/auto-apply", {
+      method: "POST",
+      body: JSON.stringify({ job_id }),
+    }),
+
+  // Application tracking
+  listApplications: () => request<Application[]>("/api/applications"),
+  createApplication: (job_id: number, status: ApplicationStatus = "saved") =>
+    request<Application>("/api/applications", {
+      method: "POST",
+      body: JSON.stringify({ job_id, status }),
+    }),
+  updateApplication: (
+    id: number,
+    patch: Partial<Pick<Application, "status" | "notes">>
+  ) =>
+    request<Application>(`/api/applications/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  deleteApplication: (id: number) =>
+    request<void>(`/api/applications/${id}`, { method: "DELETE" }),
   tailorResume: (job_id: number) =>
     request<{ tailored_resume: string }>("/api/ai/tailor-resume", {
       method: "POST",

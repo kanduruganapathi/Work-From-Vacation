@@ -70,6 +70,53 @@ def test_seed_demo_jobs_is_idempotent() -> None:
     assert len(listed.json()) >= 12
 
 
+def _auth_headers(email: str) -> dict[str, str]:
+    client.post("/api/auth/register", json={"email": email, "password": "supersecret"})
+    token = client.post(
+        "/api/auth/login", data={"username": email, "password": "supersecret"}
+    ).json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_application_tracking_flow() -> None:
+    headers = _auth_headers("tracker@example.com")
+    client.post("/api/jobs/seed")
+    job_id = client.get("/api/jobs?source=sample&limit=1").json()[0]["id"]
+
+    created = client.post(
+        "/api/applications", json={"job_id": job_id, "status": "saved"}, headers=headers
+    )
+    assert created.status_code == 201
+    app_id = created.json()["id"]
+    assert created.json()["status"] == "saved"
+
+    updated = client.patch(
+        f"/api/applications/{app_id}",
+        json={"status": "interviewing"},
+        headers=headers,
+    )
+    assert updated.status_code == 200
+    assert updated.json()["status"] == "interviewing"
+
+    listed = client.get("/api/applications", headers=headers)
+    assert listed.status_code == 200
+    assert len(listed.json()) == 1
+
+    deleted = client.delete(f"/api/applications/{app_id}", headers=headers)
+    assert deleted.status_code == 204
+
+
+def test_auto_apply_requires_ai_key() -> None:
+    headers = _auth_headers("autoapply@example.com")
+    client.post("/api/jobs/seed")
+    job_id = client.get("/api/jobs?source=sample&limit=1").json()[0]["id"]
+    # No ANTHROPIC_API_KEY in the test env, so auto-apply should report disabled.
+    resp = client.post(
+        "/api/ai/auto-apply", json={"job_id": job_id}, headers=headers
+    )
+    assert resp.status_code == 503
+
+
 class _StubSource(JobSource):
     name = "stub"
 

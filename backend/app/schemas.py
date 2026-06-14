@@ -155,3 +155,8 @@ class AgentRunRequest(BaseModel):
 class AgentRunResponse(BaseModel):
     summary: str
     matches: list[JobMatchOut] = []
+
+
+class AutoApplyRequest(BaseModel):
+    job_id: int
+    tone: str = "professional"

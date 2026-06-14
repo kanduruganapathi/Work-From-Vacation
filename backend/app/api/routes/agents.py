@@ -15,10 +15,12 @@ from app.agents import (
 from app.agents.client import AgentConfigError, ai_enabled
 from app.api.deps import get_current_user
 from app.database import get_db
-from app.models import Job, JobMatch, User
+from app.models import Application, ApplicationStatus, Job, JobMatch, User
 from app.schemas import (
     AgentRunRequest,
     AgentRunResponse,
+    ApplicationOut,
+    AutoApplyRequest,
     CoverLetterRequest,
     CoverLetterResponse,
     JobMatchOut,
@@ -134,6 +136,45 @@ def cover_letter(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return CoverLetterResponse(cover_letter=text)
+
+
+@router.post("/auto-apply", response_model=ApplicationOut)
+def auto_apply(
+    payload: AutoApplyRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Application:
+    """Automate the application: the AI tailors a resume and drafts a cover
+    letter for the job, then logs an application marked as 'applied' with those
+    materials attached. The user can review/edit before sending externally.
+    """
+    _require_ai()
+    _require_profile(current_user)
+    job = _get_job(db, payload.job_id)
+
+    try:
+        resume = resume_agent.tailor_resume(current_user.profile, job)
+        letter = cover_letter_agent.write_cover_letter(
+            current_user.profile, job, tone=payload.tone
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    application = db.scalar(
+        select(Application).where(
+            Application.user_id == current_user.id,
+            Application.job_id == job.id,
+        )
+    )
+    if not application:
+        application = Application(user_id=current_user.id, job_id=job.id)
+        db.add(application)
+    application.tailored_resume = resume
+    application.cover_letter = letter
+    application.status = ApplicationStatus.applied
+    db.commit()
+    db.refresh(application)
+    return application
 
 
 @router.post("/strategy", response_model=SearchStrategyResponse)

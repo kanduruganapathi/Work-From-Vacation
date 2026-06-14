@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import {
   api,
+  Application,
   clearToken,
   getToken,
-  Job,
   JobMatch,
   Profile,
 } from "@/lib/api";
+import JobFeed from "./components/JobFeed";
+import ApplicationsBoard from "./components/Applications";
 
 const EMPTY_PROFILE: Profile = {
   skills: [],
@@ -115,21 +117,30 @@ function Landing({ onAuthed }: { onAuthed: () => void }) {
 // ── Dashboard ─────────────────────────────────────────────────────────────
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
-  const [jobs, setJobs] = useState<Job[]>([]);
   const [matches, setMatches] = useState<JobMatch[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [aiEnabled, setAiEnabled] = useState(false);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [feedKey, setFeedKey] = useState(0); // bump to reload the job feed
+
+  async function reloadApplications() {
+    setApplications(await api.listApplications());
+  }
 
   useEffect(() => {
     (async () => {
       const p = await api.getProfile();
       if (p) setProfile({ ...EMPTY_PROFILE, ...p });
-      setJobs(await api.listJobs({ limit: "24" }));
       setAiEnabled((await api.aiStatus()).enabled);
       setMatches(await api.matches());
+      await reloadApplications();
     })().catch((e) => setStatus((e as Error).message));
   }, []);
+
+  // Map of job_id -> application, so job cards can show tracking state.
+  const trackedByJob: Record<number, Application> = {};
+  for (const a of applications) trackedByJob[a.job_id] = a;
 
   function logout() {
     clearToken();
@@ -159,7 +170,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           ? `Fetched ${r.fetched}, added ${r.inserted} new jobs.`
           : "No new jobs from live sources (they may be unreachable here). Try “Load sample jobs”."
       );
-      setJobs(await api.listJobs({ limit: "24" }));
+      setFeedKey((k) => k + 1);
     } catch (e) {
       setStatus((e as Error).message);
     } finally {
@@ -173,7 +184,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     try {
       const r = await api.seedJobs();
       setStatus(`Loaded ${r.inserted} sample jobs.`);
-      setJobs(await api.listJobs({ limit: "24" }));
+      setFeedKey((k) => k + 1);
     } catch (e) {
       setStatus((e as Error).message);
     } finally {
@@ -324,38 +335,23 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         </>
       )}
 
-      {/* Job feed */}
-      <h2 className="section-title">Latest jobs ({jobs.length})</h2>
-      <div className="grid">
-        {jobs.map((job) => (
-          <div className="card" key={job.id}>
-            <h3>{job.title}</h3>
-            <div className="muted">
-              {job.company || "Unknown"} · {job.location || "—"} ·{" "}
-              {job.employment_type}
-            </div>
-            <div style={{ marginTop: 8 }}>
-              {job.tags.slice(0, 5).map((t) => (
-                <span className="tag" key={t}>
-                  {t}
-                </span>
-              ))}
-            </div>
-            <div className="row muted" style={{ marginTop: 8 }}>
-              <span>{job.source}</span>
-              {job.remote && <span>· remote</span>}
-              {job.salary_text && <span>· {job.salary_text}</span>}
-            </div>
-            {job.url && (
-              <div style={{ marginTop: 10 }}>
-                <a href={job.url} target="_blank" rel="noreferrer">
-                  View posting →
-                </a>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      {/* Application tracker */}
+      <h2 className="section-title">Application tracker</h2>
+      <ApplicationsBoard
+        applications={applications}
+        onChanged={() => reloadApplications().catch(() => {})}
+        onStatus={setStatus}
+      />
+
+      {/* Job feed with employment-type tabs */}
+      <h2 className="section-title">Browse jobs</h2>
+      <JobFeed
+        key={feedKey}
+        aiEnabled={aiEnabled}
+        trackedByJob={trackedByJob}
+        onChanged={() => reloadApplications().catch(() => {})}
+        onStatus={setStatus}
+      />
     </div>
   );
 }
