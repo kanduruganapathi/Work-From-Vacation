@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { api, Application, ApplicationStatus, Job } from "@/lib/api";
 
+const PAGE = 24;
+
 const TABS: { key: string; label: string; params: Record<string, string> }[] = [
   { key: "all", label: "All", params: {} },
   { key: "remote", label: "Remote", params: { remote: "true" } },
@@ -20,6 +22,8 @@ const STATUS_LABEL: Record<ApplicationStatus, string> = {
   withdrawn: "Withdrawn",
 };
 
+const stripHtml = (s: string) => s.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+
 export default function JobFeed({
   aiEnabled,
   trackedByJob,
@@ -32,19 +36,41 @@ export default function JobFeed({
   onStatus: (msg: string) => void;
 }) {
   const [tab, setTab] = useState("all");
+  const [q, setQ] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [detail, setDetail] = useState<Job | null>(null);
 
-  async function load(key: string) {
-    setTab(key);
-    const params = TABS.find((t) => t.key === key)?.params ?? {};
-    setJobs(await api.listJobs({ ...params, limit: "30" }));
+  async function load(key: string, search: string, reset: boolean) {
+    const base = TABS.find((t) => t.key === key)?.params ?? {};
+    const nextOffset = reset ? 0 : offset;
+    const params: Record<string, string> = {
+      ...base,
+      limit: String(PAGE),
+      offset: String(nextOffset),
+    };
+    if (search.trim()) params.q = search.trim();
+    const batch = await api.listJobs(params);
+    setJobs(reset ? batch : [...jobs, ...batch]);
+    setOffset(nextOffset + batch.length);
+    setHasMore(batch.length === PAGE);
   }
 
   useEffect(() => {
-    load("all").catch((e) => onStatus((e as Error).message));
+    load("all", "", true).catch((e) => onStatus((e as Error).message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function selectTab(key: string) {
+    setTab(key);
+    load(key, q, true).catch((e) => onStatus((e as Error).message));
+  }
+
+  function search() {
+    load(tab, q, true).catch((e) => onStatus((e as Error).message));
+  }
 
   async function save(job: Job) {
     setBusyId(job.id);
@@ -75,12 +101,25 @@ export default function JobFeed({
 
   return (
     <>
+      <div className="row" style={{ marginBottom: 12, gap: 8 }}>
+        <input
+          placeholder="Search titles, companies, skills..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && search()}
+          style={{ flex: 1, minWidth: 220, marginTop: 0 }}
+        />
+        <button className="btn" onClick={search}>
+          Search
+        </button>
+      </div>
+
       <div className="tabs">
         {TABS.map((t) => (
           <button
             key={t.key}
             className={`tab ${tab === t.key ? "active" : ""}`}
-            onClick={() => load(t.key).catch((e) => onStatus((e as Error).message))}
+            onClick={() => selectTab(t.key)}
           >
             {t.label}
           </button>
@@ -92,7 +131,13 @@ export default function JobFeed({
           const tracked = trackedByJob[job.id];
           return (
             <div className="card" key={job.id}>
-              <h3>{job.title}</h3>
+              <h3
+                onClick={() => setDetail(job)}
+                style={{ cursor: "pointer" }}
+                title="View details"
+              >
+                {job.title}
+              </h3>
               <div className="muted">
                 {job.company || "Unknown"} · {job.location || "—"}
               </div>
@@ -138,21 +183,76 @@ export default function JobFeed({
                     </button>
                   </>
                 )}
-                {job.url && (
-                  <a href={job.url} target="_blank" rel="noreferrer">
-                    View →
-                  </a>
-                )}
+                <button className="link-btn" onClick={() => setDetail(job)}>
+                  Details
+                </button>
               </div>
             </div>
           );
         })}
         {jobs.length === 0 && (
           <p className="muted">
-            No jobs in this category yet. Try “Refresh jobs” or “Load sample jobs”.
+            No jobs here yet. Try “Refresh jobs” or “Load sample jobs”.
           </p>
         )}
       </div>
+
+      {hasMore && (
+        <div style={{ textAlign: "center", marginTop: 16 }}>
+          <button
+            className="btn secondary"
+            onClick={() => load(tab, q, false).catch((e) => onStatus((e as Error).message))}
+          >
+            Load more
+          </button>
+        </div>
+      )}
+
+      {detail && (
+        <div className="modal-overlay" onClick={() => setDetail(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <h2 style={{ margin: 0 }}>{detail.title}</h2>
+              <button className="btn secondary" onClick={() => setDetail(null)}>
+                ✕
+              </button>
+            </div>
+            <div className="muted" style={{ marginTop: 4 }}>
+              {detail.company || "Unknown"} · {detail.location || "—"} ·{" "}
+              {detail.employment_type.replace("_", " ")}
+              {detail.salary_text ? ` · ${detail.salary_text}` : ""}
+            </div>
+            <div style={{ marginTop: 10 }}>
+              {detail.tags.map((t) => (
+                <span className="tag" key={t}>
+                  {t}
+                </span>
+              ))}
+            </div>
+            <div className="modal-body">
+              {detail.description
+                ? stripHtml(detail.description)
+                : "No description provided."}
+            </div>
+            <div className="row" style={{ marginTop: 14 }}>
+              {!trackedByJob[detail.id] && (
+                <button
+                  className="btn"
+                  onClick={() => autoApply(detail)}
+                  disabled={!aiEnabled}
+                >
+                  🤖 Auto-apply
+                </button>
+              )}
+              {detail.url && (
+                <a href={detail.url} target="_blank" rel="noreferrer">
+                  Open original posting →
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -106,6 +106,33 @@ def test_application_tracking_flow() -> None:
     assert deleted.status_code == 204
 
 
+def test_resume_upload_text() -> None:
+    headers = _auth_headers("resume@example.com")
+    resp = client.post(
+        "/api/profile/resume",
+        files={"file": ("resume.txt", b"Senior Python engineer, 8 years.", "text/plain")},
+        headers=headers,
+    )
+    assert resp.status_code == 200
+    assert "Python engineer" in resp.json()["resume_text"]
+
+
+def test_scraper_link_extraction() -> None:
+    # Offline parse test for the generic scraper's link heuristics.
+    from app.sources.scraper import _LinkExtractor
+
+    html = (
+        '<a href="/jobs/123">Senior Backend Engineer</a>'
+        '<a href="/about">About us</a>'
+        '<a href="/careers/eng">Remote Frontend Position</a>'
+    )
+    parser = _LinkExtractor()
+    parser.feed(html)
+    texts = [t for _, t in parser.links]
+    assert "Senior Backend Engineer" in texts
+    assert "About us" in texts  # extractor keeps all; ScraperSource filters by hint
+
+
 def test_auto_apply_requires_ai_key() -> None:
     headers = _auth_headers("autoapply@example.com")
     client.post("/api/jobs/seed")

@@ -353,3 +353,39 @@ pre {
   font-size: 13px;
   padding: 6px 0 0;
 }
+
+/* ── Modal ────────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(8, 10, 14, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 82vh;
+  overflow: auto;
+}
+
+.modal-body {
+  margin-top: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+  max-height: 46vh;
+  overflow: auto;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}

@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Job
-from app.sources import ALL_SOURCES, JobSource, RawJob
+from app.sources import JobSource, RawJob, active_sources
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ async def fetch_all(
     sources: list[JobSource] | None = None,
 ) -> list[RawJob]:
     """Fetch from all sources concurrently and return a flat list of raw jobs."""
-    sources = sources or ALL_SOURCES
+    sources = sources or active_sources()
     results = await asyncio.gather(
         *(_fetch_source(s, query, limit_per_source) for s in sources)
     )

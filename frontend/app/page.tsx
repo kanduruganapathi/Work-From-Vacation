@@ -147,6 +147,22 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     onLogout();
   }
 
+  async function uploadResume(file: File) {
+    setBusy(true);
+    setStatus(`Parsing ${file.name}...`);
+    try {
+      const updated = await api.uploadResume(file);
+      setProfile({ ...EMPTY_PROFILE, ...updated });
+      setStatus(
+        `Resume imported (${(updated.resume_text || "").length} characters extracted).`
+      );
+    } catch (e) {
+      setStatus((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function saveProfile() {
     setBusy(true);
     setStatus("Saving profile...");
@@ -268,9 +284,33 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             })
           }
         />
-        <label>Resume text</label>
+        <label>Resume</label>
+        <div className="row" style={{ gap: 8, marginTop: 4 }}>
+          <label
+            className="btn secondary"
+            style={{ margin: 0, cursor: "pointer", display: "inline-block" }}
+          >
+            📄 Upload PDF / text
+            <input
+              type="file"
+              accept=".pdf,.txt,.md,text/plain,application/pdf"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) uploadResume(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          <span className="muted">
+            {profile.resume_text
+              ? `${profile.resume_text.length} characters on file`
+              : "No resume yet"}
+          </span>
+        </div>
         <textarea
           rows={5}
+          placeholder="...or paste your resume here"
           value={profile.resume_text || ""}
           onChange={(e) =>
             setProfile({ ...profile, resume_text: e.target.value })

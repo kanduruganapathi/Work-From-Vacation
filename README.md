@@ -117,12 +117,14 @@ docker compose up --build
 
 | Source | Type | Auth | Notes |
 | --- | --- | --- | --- |
-| Remotive | API | none | Remote jobs across categories |
-| RemoteOK | API | none | Remote / tech roles |
-| Arbeitnow | API | none | Remote + EU roles |
-| Generic RSS | RSS | none | Point at any job-board feed |
-| Adzuna | API | key | Full-time / contract aggregator (set `ADZUNA_*`) |
-| Scraper | scrape | none | Disabled by default; respect each site's ToS |
+| Remotive | API | none | Remote jobs across categories (default) |
+| RemoteOK | API | none | Remote / tech roles (default) |
+| Arbeitnow | API | none | Remote + EU roles (default) |
+| Adzuna | API | key | Full-time / contract aggregator; auto-enabled when `ADZUNA_APP_ID`/`ADZUNA_APP_KEY` are set |
+| Greenhouse | API | none | Per-company board (`GreenhouseSource("slug")`) — source directly from employers |
+| Lever | API | none | Per-company board (`LeverSource("slug")`) |
+| Generic RSS | RSS | none | Point `RSSSource(url)` at any job-board feed |
+| Scraper | scrape | none | `ScraperSource(url)` for boards without an API/feed. **Disabled by default; respect each site's ToS.** |
 
 Connectors live in [`backend/app/sources/`](backend/app/sources/) and implement a
 common `JobSource` interface, so adding a new source is one file.

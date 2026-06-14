@@ -142,6 +142,24 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(profile),
     }),
+  uploadResume: async (file: File): Promise<Profile> => {
+    // Multipart upload — let the browser set the Content-Type boundary.
+    const form = new FormData();
+    form.append("file", file);
+    const headers: Record<string, string> = {};
+    const token = getToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${BASE}/api/profile/resume`, {
+      method: "POST",
+      headers,
+      body: form,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(formatError(body, res.status));
+    }
+    return res.json();
+  },
 
   listJobs: (params: Record<string, string> = {}) => {
     const qs = new URLSearchParams(params).toString();
