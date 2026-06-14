@@ -62,6 +62,7 @@ All run on `claude-opus-4-8` with adaptive thinking and tool use. See
 
 ### Prerequisites
 - Python 3.11+
+- [uv](https://docs.astral.sh/uv/) (Python package manager)
 - Node.js 20+
 - An [Anthropic API key](https://console.anthropic.com/) (`ANTHROPIC_API_KEY`)
 
@@ -69,11 +70,12 @@ All run on `claude-opus-4-8` with adaptive thinking and tool use. See
 
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+uv sync --extra dev           # creates .venv and installs everything
 cp .env.example .env          # then set ANTHROPIC_API_KEY
-uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 ```
+
+Run the tests with `uv run pytest`.
 
 API docs are served at http://localhost:8000/docs
 
