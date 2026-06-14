@@ -41,6 +41,10 @@ function Landing({ onAuthed }: { onAuthed: () => void }) {
   const [busy, setBusy] = useState(false);
 
   async function submit() {
+    if (mode === "register" && password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -87,8 +91,16 @@ function Landing({ onAuthed }: { onAuthed: () => void }) {
         <input
           type="password"
           value={password}
+          minLength={8}
+          placeholder="At least 8 characters"
           onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
         />
+        {mode === "register" && (
+          <p className="muted" style={{ marginTop: 6 }}>
+            Use at least 8 characters.
+          </p>
+        )}
         {error && <p className="error">{error}</p>}
         <div style={{ marginTop: 16 }}>
           <button className="btn" onClick={submit} disabled={busy}>

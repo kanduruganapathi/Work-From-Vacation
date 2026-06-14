@@ -21,6 +21,23 @@ export function clearToken() {
   window.localStorage.removeItem(TOKEN_KEY);
 }
 
+// FastAPI returns `detail` as a string (HTTPException) or an array of
+// {loc, msg, type} objects (422 validation). Render both as readable text.
+function formatError(body: unknown, status: number): string {
+  const detail = (body as { detail?: unknown })?.detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((e: { loc?: unknown[]; msg?: string }) => {
+        const field = Array.isArray(e.loc) ? e.loc[e.loc.length - 1] : "";
+        return field ? `${field}: ${e.msg}` : e.msg;
+      })
+      .filter(Boolean)
+      .join("; ");
+  }
+  return `Request failed (${status})`;
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -31,8 +48,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   const res = await fetch(`${BASE}${path}`, { ...options, headers });
   if (!res.ok) {
-    const detail = await res.json().catch(() => ({}));
-    throw new Error(detail.detail || `Request failed: ${res.status}`);
+    const body = await res.json().catch(() => ({}));
+    throw new Error(formatError(body, res.status));
   }
   if (res.status === 204) return undefined as T;
   return res.json();
