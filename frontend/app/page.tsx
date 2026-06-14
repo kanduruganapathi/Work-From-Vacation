@@ -142,7 +142,25 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     setStatus("Pulling fresh jobs from all sources...");
     try {
       const r = await api.refreshJobs();
-      setStatus(`Fetched ${r.fetched}, added ${r.inserted} new jobs.`);
+      setStatus(
+        r.inserted > 0
+          ? `Fetched ${r.fetched}, added ${r.inserted} new jobs.`
+          : "No new jobs from live sources (they may be unreachable here). Try “Load sample jobs”."
+      );
+      setJobs(await api.listJobs({ limit: "24" }));
+    } catch (e) {
+      setStatus((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function seed() {
+    setBusy(true);
+    setStatus("Loading curated sample jobs...");
+    try {
+      const r = await api.seedJobs();
+      setStatus(`Loaded ${r.inserted} sample jobs.`);
       setJobs(await api.listJobs({ limit: "24" }));
     } catch (e) {
       setStatus((e as Error).message);
@@ -241,6 +259,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </button>
           <button className="btn secondary" onClick={refresh} disabled={busy}>
             Refresh jobs
+          </button>
+          <button className="btn secondary" onClick={seed} disabled={busy}>
+            Load sample jobs
           </button>
           <button
             className="btn"

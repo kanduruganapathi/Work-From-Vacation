@@ -112,6 +112,11 @@ export const api = {
       "/api/jobs/refresh",
       { method: "POST" }
     ),
+  seedJobs: () =>
+    request<{ fetched: number; inserted: number; sources: Record<string, number> }>(
+      "/api/jobs/seed",
+      { method: "POST" }
+    ),
 
   aiStatus: () => request<{ enabled: boolean }>("/api/ai/status"),
   runHunt: (instruction: string, max_jobs = 15) =>

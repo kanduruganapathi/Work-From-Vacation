@@ -19,6 +19,9 @@ application — so you can find your next role while you're, well, on vacation.
 | **Apply** | AI tailors your resume and drafts a cover letter per role. Track applications through every stage. |
 | **Alert** | Get notified about new high-fit roles as they appear. |
 
+The frontend ships with an animated **three.js** background (a rotating globe of
+remote-job nodes) for a polished, product-grade landing and dashboard.
+
 ## 🏗️ Architecture
 
 ```
@@ -83,6 +86,13 @@ Seed the job feed from real sources:
 
 ```bash
 curl -X POST http://localhost:8000/api/jobs/refresh
+```
+
+No outbound network (sandbox / offline / CI)? Load curated sample jobs instead —
+or just click **Load sample jobs** in the dashboard:
+
+```bash
+curl -X POST http://localhost:8000/api/jobs/seed
 ```
 
 ### Frontend

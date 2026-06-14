@@ -18,10 +18,31 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
   color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(79, 157, 222, 0.12), transparent),
+    radial-gradient(900px 500px at 10% 10%, rgba(70, 192, 138, 0.1), transparent),
+    var(--bg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
+}
+
+/* Fixed full-screen three.js canvas sitting behind all content. */
+.three-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.three-bg canvas {
+  display: block;
+}
+
+.nav,
+.container {
+  position: relative;
+  z-index: 1;
 }
 
 a {
@@ -40,7 +61,8 @@ a {
   justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border);
-  background: var(--panel);
+  background: rgba(23, 26, 33, 0.72);
+  backdrop-filter: blur(10px);
 }
 
 .brand {
@@ -59,10 +81,17 @@ a {
 }
 
 .card {
-  background: var(--panel);
+  background: rgba(23, 26, 33, 0.78);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.grid .card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
 }
 
 .card h3 {

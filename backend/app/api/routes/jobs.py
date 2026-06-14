@@ -10,6 +10,7 @@ from app.database import get_db
 from app.models import EmploymentType, Job
 from app.schemas import JobOut, RefreshResult
 from app.services import aggregator
+from app.services.sample_data import sample_jobs
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 
@@ -59,3 +60,15 @@ async def refresh(
         db, query=q, limit_per_source=limit_per_source
     )
     return RefreshResult(fetched=fetched, inserted=inserted, sources=per_source)
+
+
+@router.post("/seed", response_model=RefreshResult)
+def seed_demo_jobs(db: Session = Depends(get_db)) -> RefreshResult:
+    """Load curated sample jobs.
+
+    Handy for demos and offline development when live sources are unreachable.
+    Idempotent — re-running only adds jobs not already present.
+    """
+    jobs = sample_jobs()
+    inserted, per_source = aggregator.upsert_jobs(db, jobs)
+    return RefreshResult(fetched=len(jobs), inserted=inserted, sources=per_source)

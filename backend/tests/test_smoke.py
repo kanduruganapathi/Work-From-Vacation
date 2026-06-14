@@ -55,6 +55,21 @@ def test_register_login_and_profile() -> None:
     assert resp.json()["skills"] == ["python", "fastapi"]
 
 
+def test_seed_demo_jobs_is_idempotent() -> None:
+    first = client.post("/api/jobs/seed")
+    assert first.status_code == 200
+    assert first.json()["inserted"] >= 12
+
+    # Re-seeding adds nothing new.
+    second = client.post("/api/jobs/seed")
+    assert second.status_code == 200
+    assert second.json()["inserted"] == 0
+
+    listed = client.get("/api/jobs?source=sample&limit=50")
+    assert listed.status_code == 200
+    assert len(listed.json()) >= 12
+
+
 class _StubSource(JobSource):
     name = "stub"
 

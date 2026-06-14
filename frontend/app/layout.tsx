@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ThreeBackground from "./components/ThreeBackground";
 
 export const metadata: Metadata = {
   title: "Work From Vacation — Automated Job Search",
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <ThreeBackground />
         <nav className="nav">
           <div className="brand">
             Work From <span>Vacation</span> 🌴
