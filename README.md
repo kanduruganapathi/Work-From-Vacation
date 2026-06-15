@@ -142,11 +142,18 @@ docker compose up --build
 | Remotive | API | none | Remote jobs across categories (default) |
 | RemoteOK | API | none | Remote / tech roles (default) |
 | Arbeitnow | API | none | Remote + EU roles (default) |
+| Jobicy | API | none | Remote jobs by industry/tag (default) |
+| Himalayas | API | none | Remote jobs (default) |
+| The Muse | API | none | Full-time roles across companies + locations incl. India (default) |
+| We Work Remotely | RSS | none | Remote feed (in `EXTRA_RSS_FEEDS`, default) |
+| Greenhouse | API | none | Per-company boards — fan-out over `ATS_GREENHOUSE_SLUGS` (default: stripe, airbnb, dropbox, coinbase, databricks, figma, gitlab, reddit) |
+| Lever | API | none | Per-company boards — fan-out over `ATS_LEVER_SLUGS` |
 | Adzuna | API | key | Full-time / contract aggregator; auto-enabled when `ADZUNA_APP_ID`/`ADZUNA_APP_KEY` are set |
-| Greenhouse | API | none | Per-company board (`GreenhouseSource("slug")`) — source directly from employers |
-| Lever | API | none | Per-company board (`LeverSource("slug")`) |
-| Generic RSS | RSS | none | Point `RSSSource(url)` at any job-board feed |
+| Generic RSS | RSS | none | Add any feed URLs to `EXTRA_RSS_FEEDS` |
 | Scraper | scrape | none | `ScraperSource(url)` for boards without an API/feed. **Disabled by default; respect each site's ToS.** |
+
+Add more employer boards by appending company slugs to `ATS_GREENHOUSE_SLUGS` /
+`ATS_LEVER_SLUGS`, or feed URLs to `EXTRA_RSS_FEEDS` — no code changes needed.
 
 Connectors live in [`backend/app/sources/`](backend/app/sources/) and implement a
 common `JobSource` interface, so adding a new source is one file.

@@ -27,6 +27,17 @@ class Settings(BaseSettings):
     adzuna_app_id: str | None = None
     adzuna_app_key: str | None = None
 
+    # Per-company ATS boards to aggregate (Greenhouse + Lever slugs).
+    ats_greenhouse_slugs: list[str] = [
+        "stripe", "airbnb", "dropbox", "coinbase", "databricks", "figma",
+        "gitlab", "reddit",
+    ]
+    ats_lever_slugs: list[str] = []
+    # Extra RSS/Atom job feeds (e.g. We Work Remotely).
+    extra_rss_feeds: list[str] = [
+        "https://weworkremotely.com/remote-jobs.rss",
+    ]
+
     # Background scheduler (periodic refresh + auto-scoring + alerts)
     scheduler_enabled: bool = False
     scheduler_refresh_minutes: int = 60

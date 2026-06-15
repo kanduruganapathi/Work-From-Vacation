@@ -21,6 +21,7 @@ _PRODUCT_TIER1 = {
     "openai", "anthropic", "databricks", "snowflake", "tesla", "intuit",
     "servicenow", "workday", "dropbox", "pinterest", "block", "square",
     "coinbase", "palantir", "samsung", "google cloud", "meta platforms",
+    "walmart", "walmart labs", "walmart global tech", "goldman sachs",
 }
 _PRODUCT_TIER2 = {
     # Global strong product / scale-ups
@@ -40,6 +41,7 @@ _PRODUCT_TIER2 = {
     "physicswallah", "licious", "bigbasket", "udaan", "spinny", "cars24",
     "lenskart", "boat", "mobikwik", "acko", "digit", "postman labs",
     "rapido", "porter", "dunzo", "groww", "jupiter", "fi money", "open",
+    "mindtickle", "darwinbox", "angel one", "angelone", "tata elxsi",
 }
 
 # ── IT-services multinationals (classic "MNC" service companies) ─────────────
