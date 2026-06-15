@@ -1,8 +1,8 @@
 """Classify a company into a type (product / startup / mnc / service) and a tier.
 
-This uses curated lists of well-known companies plus light heuristics. It's a
-pragmatic starting point — extend the dictionaries, or back them with a real
-company-intelligence dataset, as needed.
+Backed by curated sets of well-known global and Indian companies plus light
+heuristics. Extend the sets below, or swap in a company-intelligence dataset,
+as your coverage needs grow.
 
 Returned values:
 - ``company_type``: ``product`` | ``startup`` | ``mnc`` | ``service`` | ``other``
@@ -11,37 +11,56 @@ Returned values:
 
 from __future__ import annotations
 
-# Product companies (build their own products), by tier.
+# ── Product companies (build their own products) ────────────────────────────
 _PRODUCT_TIER1 = {
-    "google", "alphabet", "meta", "facebook", "amazon", "apple", "microsoft",
-    "netflix", "nvidia", "adobe", "salesforce", "atlassian", "stripe", "uber",
-    "airbnb", "linkedin", "oracle", "paypal", "spotify", "x", "twitter",
-    "openai", "anthropic",
+    # Global elite (FAANG+ and peers)
+    "google", "alphabet", "meta", "facebook", "instagram", "amazon", "aws",
+    "apple", "microsoft", "netflix", "nvidia", "adobe", "salesforce", "oracle",
+    "sap", "intel", "qualcomm", "cisco", "vmware", "linkedin", "paypal",
+    "uber", "airbnb", "atlassian", "stripe", "spotify", "x", "twitter",
+    "openai", "anthropic", "databricks", "snowflake", "tesla", "intuit",
+    "servicenow", "workday", "dropbox", "pinterest", "block", "square",
+    "coinbase", "palantir", "samsung", "google cloud", "meta platforms",
 }
 _PRODUCT_TIER2 = {
+    # Global strong product / scale-ups
+    "shopify", "gitlab", "github", "hashicorp", "datadog", "cloudflare",
+    "notion", "figma", "canva", "intercom", "segment", "asana", "miro",
+    "postman", "browserstack", "mongodb", "elastic", "confluent", "okta",
+    "zendesk", "twilio", "grab", "gojek", "sea", "shopee", "doordash",
+    "instacart", "robinhood", "plaid", "brex", "ramp", "vercel", "supabase",
+    # Indian product unicorns / soonicorns
     "flipkart", "swiggy", "zomato", "razorpay", "freshworks", "zoho", "cred",
-    "phonepe", "paytm", "postman", "browserstack", "gojek", "grab", "shopify",
-    "gitlab", "hashicorp", "datadog", "twilio", "cloudflare", "notion",
-    "figma", "canva", "intercom", "segment",
+    "phonepe", "paytm", "meesho", "sharechat", "dream11", "dreamsports",
+    "unacademy", "byjus", "byju's", "ola", "olacabs", "oyo", "nykaa",
+    "policybazaar", "zerodha", "groww", "upstox", "hasura", "chargebee",
+    "druva", "icertis", "innovaccer", "gupshup", "mamaearth", "urban company",
+    "urbancompany", "delhivery", "zepto", "blinkit", "cult.fit", "curefit",
+    "pine labs", "pinelabs", "slice", "navi", "khatabook", "vedantu",
+    "physicswallah", "licious", "bigbasket", "udaan", "spinny", "cars24",
+    "lenskart", "boat", "mobikwik", "acko", "digit", "postman labs",
+    "rapido", "porter", "dunzo", "groww", "jupiter", "fi money", "open",
 }
 
-# Large IT-services multinationals (the classic "MNC" service companies).
+# ── IT-services multinationals (classic "MNC" service companies) ─────────────
 _MNC_TIER1 = {
-    "tcs", "tata consultancy services", "infosys", "wipro", "accenture",
-    "cognizant", "capgemini", "ibm", "hcl", "hcltech", "tech mahindra",
-    "deloitte", "dxc", "dxc technology",
+    "tcs", "tata consultancy services", "infosys", "wipro", "hcl", "hcltech",
+    "hcl technologies", "tech mahindra", "accenture", "cognizant", "capgemini",
+    "ibm", "deloitte", "dxc", "dxc technology", "pwc", "ey", "ernst & young",
+    "kpmg", "atos", "ntt data", "fujitsu",
 }
 _MNC_TIER2 = {
-    "mindtree", "mphasis", "ltimindtree", "lti", "persistent", "birlasoft",
-    "hexaware", "coforge", "nagarro", "zensar",
+    "mindtree", "mphasis", "ltimindtree", "lti", "l&t infotech", "persistent",
+    "persistent systems", "birlasoft", "hexaware", "coforge", "nagarro",
+    "zensar", "cybage", "sonata software", "happiest minds", "mastek",
+    "newgen", "ramco systems", "kpit", "cyient", "sasken",
 }
 
-# Curated startups (incl. the demo/sample companies so the UI shows variety).
+# ── Curated startups (incl. demo/sample companies for UI variety) ───────────
 _STARTUPS = {
     "lumen labs", "brightside studio", "vela ai", "harbor metrics", "docflow",
     "tidal apps", "sproutly", "cadence health",
 }
-# Sample companies presented as product-tier for demo variety.
 _SAMPLE_PRODUCT_TIER2 = {
     "northwind cloud", "solstice systems", "aurora commerce", "meridian",
 }
@@ -65,8 +84,8 @@ def classify(company: str | None) -> tuple[str, str | None]:
         return "startup", "tier3"
 
     # Heuristics for unlisted companies.
-    if any(k in name for k in ("labs", "ai", "studio", "io")):
+    if any(k in name for k in ("labs", " ai", "studio", "startup")):
         return "startup", "tier3"
-    if any(k in name for k in ("technologies", "consulting", "solutions", "services")):
+    if any(k in name for k in ("technologies", "consulting", "solutions", "services", "infotech")):
         return "service", "tier3"
     return "other", None

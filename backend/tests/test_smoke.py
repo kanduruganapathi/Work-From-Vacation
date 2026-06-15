@@ -65,7 +65,7 @@ def test_seed_demo_jobs_is_idempotent() -> None:
     assert second.status_code == 200
     assert second.json()["inserted"] == 0
 
-    listed = client.get("/api/jobs?source=sample&limit=50")
+    listed = client.get("/api/jobs?limit=50")
     assert listed.status_code == 200
     assert len(listed.json()) >= 12
 
@@ -81,7 +81,7 @@ def _auth_headers(email: str) -> dict[str, str]:
 def test_application_tracking_flow() -> None:
     headers = _auth_headers("tracker@example.com")
     client.post("/api/jobs/seed")
-    job_id = client.get("/api/jobs?source=sample&limit=1").json()[0]["id"]
+    job_id = client.get("/api/jobs?limit=1").json()[0]["id"]
 
     created = client.post(
         "/api/applications", json={"job_id": job_id, "status": "saved"}, headers=headers
@@ -136,7 +136,7 @@ def test_scraper_link_extraction() -> None:
 def test_auto_apply_requires_ai_key() -> None:
     headers = _auth_headers("autoapply@example.com")
     client.post("/api/jobs/seed")
-    job_id = client.get("/api/jobs?source=sample&limit=1").json()[0]["id"]
+    job_id = client.get("/api/jobs?limit=1").json()[0]["id"]
     # No ANTHROPIC_API_KEY in the test env, so auto-apply should report disabled.
     resp = client.post(
         "/api/ai/auto-apply", json={"job_id": job_id}, headers=headers
@@ -236,7 +236,7 @@ def test_notifications_empty_then_list() -> None:
 def test_async_ai_endpoints_require_ai_key() -> None:
     headers = _auth_headers("async@example.com")
     client.post("/api/jobs/seed")
-    job_id = client.get("/api/jobs?source=sample&limit=1").json()[0]["id"]
+    job_id = client.get("/api/jobs?limit=1").json()[0]["id"]
     assert (
         client.post("/api/ai/run-async", json={"instruction": "go"}, headers=headers).status_code
         == 503
@@ -296,7 +296,7 @@ class _StubSource(JobSource):
             RawJob(
                 source=self.name,
                 external_id="1",
-                title="Senior Python Engineer",
+                title="Zzx Stub Backend Role",
                 company="Acme",
                 remote=True,
             )
@@ -314,6 +314,6 @@ def test_aggregator_upserts_and_dedupes() -> None:
         # Second run should dedupe.
         inserted_again, _ = aggregator.upsert_jobs(db, raw)
         assert inserted_again == 0
-        assert db.query(Job).filter(Job.title == "Senior Python Engineer").count() == 1
+        assert db.query(Job).filter(Job.title == "Zzx Stub Backend Role").count() == 1
     finally:
         db.close()

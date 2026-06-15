@@ -147,6 +147,22 @@ export default function JobFeed({
     load(tab, 0, false).catch((e) => onStatus((e as Error).message));
   }
 
+  const hasFilters =
+    q || source || recency || tag || location || companyType || companyTier ||
+    tab !== "all";
+
+  function clearFilters() {
+    setQ("");
+    setSource("");
+    setRecency("");
+    setTag("");
+    setLocation("");
+    setCompanyType("");
+    setCompanyTier("");
+    setSort("recent");
+    setTab("all");
+  }
+
   async function saveCurrent() {
     const name = window.prompt(
       "Name this search",
@@ -405,9 +421,19 @@ export default function JobFeed({
         })}
       </div>
 
-      <div className="muted" style={{ margin: "0 0 10px" }}>
-        {total} job{total === 1 ? "" : "s"}
-        {q ? ` for “${q}”` : ""}
+      <div
+        className="row"
+        style={{ margin: "0 0 10px", justifyContent: "space-between" }}
+      >
+        <span className="muted">
+          {total} job{total === 1 ? "" : "s"}
+          {q ? ` for “${q}”` : ""}
+        </span>
+        {hasFilters && (
+          <button className="link-btn" onClick={clearFilters}>
+            Clear filters
+          </button>
+        )}
       </div>
 
       <div className="grid">

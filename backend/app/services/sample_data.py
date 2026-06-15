@@ -1,7 +1,9 @@
 """Curated sample jobs for demos and offline development.
 
 Useful when outbound network access to live sources is unavailable (sandboxes,
-CI, first-run demos). Seed them via ``POST /api/jobs/seed``.
+CI, first-run demos). Seed them via ``POST /api/jobs/seed``. The set spans Indian
+metros + global remote roles, real companies (so classification populates), and a
+variety of source labels (so the source filter is meaningful).
 """
 
 from __future__ import annotations
@@ -12,234 +14,86 @@ from app.models import EmploymentType
 from app.sources.base import RawJob
 
 _NOW = datetime.now(timezone.utc)
+FT = EmploymentType.full_time
+CT = EmploymentType.contract
+FL = EmploymentType.freelance
+PT = EmploymentType.part_time
 
+# (ext_id, title, company, location, type, source, salary, tags, days_ago)
+_ROWS = [
+    # ── Bangalore ──────────────────────────────────────────────────────────
+    ("s1", "Senior Backend Engineer", "Flipkart", "Bangalore, India", FT, "naukri", "₹35-55 LPA", ["java", "microservices", "kafka"], 1),
+    ("s2", "Software Engineer II", "Swiggy", "Bangalore, India", FT, "linkedin", "₹28-42 LPA", ["go", "python", "distributed-systems"], 2),
+    ("s3", "Backend Engineer", "Razorpay", "Bangalore, India", FT, "instahyre", "₹30-50 LPA", ["java", "spring", "payments"], 1),
+    ("s4", "Senior Python Engineer", "CRED", "Bangalore, India", FT, "wellfound", "₹40-60 LPA", ["python", "fastapi", "aws"], 0),
+    ("s5", "SDE - Backend", "PhonePe", "Bangalore, India", FT, "naukri", "₹25-45 LPA", ["java", "scala", "kafka"], 3),
+    ("s6", "Frontend Engineer", "Meesho", "Bangalore, India", FT, "cutshort", "₹22-38 LPA", ["react", "typescript", "nextjs"], 2),
+    ("s7", "Data Scientist", "Zerodha", "Bangalore, India", FT, "linkedin", "₹30-48 LPA", ["python", "ml", "pandas"], 4),
+    ("s8", "Software Engineer", "Google", "Bangalore, India", FT, "linkedin", "₹50-90 LPA", ["c++", "distributed-systems"], 1),
+    ("s9", "SDE II", "Amazon", "Bangalore, India", FT, "naukri", "₹40-70 LPA", ["java", "aws", "dynamodb"], 2),
+    ("s10", "Platform Engineer", "Atlassian", "Bangalore, India", FT, "wellfound", "₹45-75 LPA", ["go", "kubernetes", "aws"], 1),
 
-def _ago(days: int) -> datetime:
-    return _NOW - timedelta(days=days)
+    # ── Hyderabad ──────────────────────────────────────────────────────────
+    ("s11", "Senior Software Engineer", "Microsoft", "Hyderabad, India", FT, "linkedin", "₹45-80 LPA", ["c#", "azure", "distributed-systems"], 1),
+    ("s12", "Backend Developer", "Amazon", "Hyderabad, India", FT, "naukri", "₹38-65 LPA", ["java", "aws"], 2),
+    ("s13", "Full-Stack Engineer", "Infosys", "Hyderabad, India", FT, "naukri", "₹12-22 LPA", ["java", "angular", "spring"], 3),
+    ("s14", "DevOps Engineer", "Accenture", "Hyderabad, India", FT, "hirist", "₹14-26 LPA", ["aws", "terraform", "jenkins"], 2),
+    ("s15", "ML Engineer", "Uber", "Hyderabad, India", FT, "linkedin", "₹42-70 LPA", ["python", "pytorch", "ml"], 0),
 
+    # ── Chennai ────────────────────────────────────────────────────────────
+    ("s16", "Product Engineer", "Freshworks", "Chennai, India", FT, "wellfound", "₹28-45 LPA", ["ruby", "rails", "react"], 1),
+    ("s17", "Software Developer", "Zoho", "Chennai, India", FT, "naukri", "₹18-32 LPA", ["java", "javascript"], 4),
+    ("s18", "Senior Engineer", "Cognizant", "Chennai, India", FT, "hirist", "₹13-24 LPA", ["dotnet", "azure"], 3),
+    ("s19", "Frontend Developer", "Wipro", "Chennai, India", FT, "naukri", "₹10-20 LPA", ["react", "typescript"], 5),
 
-SAMPLE_JOBS: list[RawJob] = [
-    RawJob(
-        source="sample",
-        external_id="sample-1",
-        title="Senior Backend Engineer (Python)",
-        company="Lumen Labs",
-        location="Remote — Worldwide",
-        remote=True,
-        employment_type=EmploymentType.full_time,
-        category="Software Development",
-        tags=["python", "fastapi", "postgres", "aws"],
-        description=(
-            "Build and scale the API platform powering our analytics product. "
-            "You'll own services end to end: design, FastAPI implementation, "
-            "Postgres data modeling, and deployment on AWS. 5+ years with Python."
-        ),
-        url="https://example.com/jobs/sample-1",
-        salary_text="$140,000 - $180,000",
-        posted_at=_ago(1),
-    ),
-    RawJob(
-        source="sample",
-        external_id="sample-2",
-        title="Freelance React Developer",
-        company="Brightside Studio",
-        location="Remote — Europe",
-        remote=True,
-        employment_type=EmploymentType.freelance,
-        category="Frontend",
-        tags=["react", "typescript", "nextjs", "tailwind"],
-        description=(
-            "Short-term freelance engagement to ship a marketing site and a "
-            "customer dashboard in Next.js. ~20 hrs/week for 3 months."
-        ),
-        url="https://example.com/jobs/sample-2",
-        salary_text="$60 - $90 / hour",
-        posted_at=_ago(2),
-    ),
-    RawJob(
-        source="sample",
-        external_id="sample-3",
-        title="Contract DevOps Engineer",
-        company="Northwind Cloud",
-        location="Remote — US",
-        remote=True,
-        employment_type=EmploymentType.contract,
-        category="DevOps",
-        tags=["kubernetes", "terraform", "ci/cd", "gcp"],
-        description=(
-            "6-month contract to harden our Kubernetes platform and migrate CI "
-            "to GitHub Actions. Strong Terraform and GCP experience required."
-        ),
-        url="https://example.com/jobs/sample-3",
-        salary_text="$80 - $110 / hour",
-        posted_at=_ago(3),
-    ),
-    RawJob(
-        source="sample",
-        external_id="sample-4",
-        title="Full-Stack Engineer",
-        company="Cadence Health",
-        location="Remote — US/Canada",
-        remote=True,
-        employment_type=EmploymentType.full_time,
-        category="Software Development",
-        tags=["typescript", "node", "react", "graphql"],
-        description=(
-            "Join a small product team building patient-facing tools. Full-stack "
-            "TypeScript across a Node/GraphQL API and a React frontend."
-        ),
-        url="https://example.com/jobs/sample-4",
-        salary_text="$120,000 - $155,000",
-        posted_at=_ago(1),
-    ),
-    RawJob(
-        source="sample",
-        external_id="sample-5",
-        title="Machine Learning Engineer (LLMs)",
-        company="Vela AI",
-        location="Remote — Worldwide",
-        remote=True,
-        employment_type=EmploymentType.full_time,
-        category="Machine Learning",
-        tags=["python", "pytorch", "llm", "rag"],
-        description=(
-            "Design and ship LLM-powered features: retrieval pipelines, "
-            "evaluation harnesses, and agentic workflows. Experience with "
-            "production ML and prompt engineering preferred."
-        ),
-        url="https://example.com/jobs/sample-5",
-        salary_text="$160,000 - $210,000",
-        posted_at=_ago(0),
-    ),
-    RawJob(
-        source="sample",
-        external_id="sample-6",
-        title="Part-Time Data Analyst",
-        company="Harbor Metrics",
-        location="Remote — Anywhere",
-        remote=True,
-        employment_type=EmploymentType.part_time,
-        category="Data",
-        tags=["sql", "python", "dashboards", "analytics"],
-        description=(
-            "Part-time analyst to build dashboards and answer product questions "
-            "with SQL and lightweight Python. ~15 hrs/week, flexible hours."
-        ),
-        url="https://example.com/jobs/sample-6",
-        salary_text="$45 - $65 / hour",
-        posted_at=_ago(4),
-    ),
-    RawJob(
-        source="sample",
-        external_id="sample-7",
-        title="Platform Engineer",
-        company="Solstice Systems",
-        location="Remote — EMEA",
-        remote=True,
-        employment_type=EmploymentType.full_time,
-        category="Infrastructure",
-        tags=["go", "kubernetes", "observability", "grpc"],
-        description=(
-            "Own developer experience and platform reliability. Go services, "
-            "Kubernetes operators, and observability tooling for ~80 engineers."
-        ),
-        url="https://example.com/jobs/sample-7",
-        salary_text="€90,000 - €120,000",
-        posted_at=_ago(2),
-    ),
-    RawJob(
-        source="sample",
-        external_id="sample-8",
-        title="Freelance Technical Writer",
-        company="Docflow",
-        location="Remote — Worldwide",
-        remote=True,
-        employment_type=EmploymentType.freelance,
-        category="Content",
-        tags=["documentation", "api", "developer-tools"],
-        description=(
-            "Write developer documentation and tutorials for a cloud API. "
-            "Project-based; strong technical background and clear writing."
-        ),
-        url="https://example.com/jobs/sample-8",
-        salary_text="$50 - $80 / hour",
-        posted_at=_ago(5),
-    ),
-    RawJob(
-        source="sample",
-        external_id="sample-9",
-        title="Senior Frontend Engineer",
-        company="Aurora Commerce",
-        location="Remote — US",
-        remote=True,
-        employment_type=EmploymentType.full_time,
-        category="Frontend",
-        tags=["react", "typescript", "performance", "design-systems"],
-        description=(
-            "Lead frontend architecture for a high-traffic commerce platform. "
-            "Deep React/TypeScript expertise and a feel for performance and UX."
-        ),
-        url="https://example.com/jobs/sample-9",
-        salary_text="$150,000 - $190,000",
-        posted_at=_ago(1),
-    ),
-    RawJob(
-        source="sample",
-        external_id="sample-10",
-        title="Contract Mobile Developer (React Native)",
-        company="Tidal Apps",
-        location="Remote — LATAM",
-        remote=True,
-        employment_type=EmploymentType.contract,
-        category="Mobile",
-        tags=["react-native", "typescript", "ios", "android"],
-        description=(
-            "4-month contract to build cross-platform features in React Native. "
-            "Ship to both iOS and Android with a small, fast-moving team."
-        ),
-        url="https://example.com/jobs/sample-10",
-        salary_text="$55 - $75 / hour",
-        posted_at=_ago(3),
-    ),
-    RawJob(
-        source="sample",
-        external_id="sample-11",
-        title="Staff Software Engineer",
-        company="Meridian",
-        location="Remote — Worldwide",
-        remote=True,
-        employment_type=EmploymentType.full_time,
-        category="Software Development",
-        tags=["python", "distributed-systems", "architecture"],
-        description=(
-            "Technical leadership across multiple teams. Set architecture "
-            "direction for distributed systems handling millions of requests."
-        ),
-        url="https://example.com/jobs/sample-11",
-        salary_text="$200,000 - $250,000",
-        posted_at=_ago(0),
-    ),
-    RawJob(
-        source="sample",
-        external_id="sample-12",
-        title="Junior Backend Developer",
-        company="Sproutly",
-        location="Remote — Worldwide",
-        remote=True,
-        employment_type=EmploymentType.full_time,
-        category="Software Development",
-        tags=["python", "django", "rest", "entry-level"],
-        description=(
-            "Great first remote role: build REST APIs in Django with mentorship "
-            "and code review. We hire for curiosity and fundamentals."
-        ),
-        url="https://example.com/jobs/sample-12",
-        salary_text="$70,000 - $95,000",
-        posted_at=_ago(2),
-    ),
+    # ── Mumbai ─────────────────────────────────────────────────────────────
+    ("s20", "Backend Engineer", "Nykaa", "Mumbai, India", FT, "instahyre", "₹26-42 LPA", ["node", "typescript", "mongodb"], 2),
+    ("s21", "Data Engineer", "TCS", "Mumbai, India", FT, "naukri", "₹12-22 LPA", ["spark", "python", "sql"], 3),
+    ("s22", "Senior Frontend Engineer", "Dream11", "Mumbai, India", FT, "wellfound", "₹35-55 LPA", ["react", "typescript", "performance"], 1),
+
+    # ── Pune / Delhi NCR ───────────────────────────────────────────────────
+    ("s23", "Software Engineer", "Persistent Systems", "Pune, India", FT, "naukri", "₹10-20 LPA", ["java", "spring"], 4),
+    ("s24", "SDE", "Paytm", "Noida, India", FT, "naukri", "₹22-40 LPA", ["java", "kafka", "payments"], 2),
+    ("s25", "Backend Engineer", "Zomato", "Gurgaon, India", FT, "linkedin", "₹28-46 LPA", ["go", "postgres"], 1),
+
+    # ── Contract / Freelance (India + remote) ──────────────────────────────
+    ("s26", "Contract React Developer", "Tidal Apps", "Remote — India", CT, "cutshort", "₹2,500-4,000/hr", ["react", "typescript"], 2),
+    ("s27", "Freelance Python Developer", "Brightside Studio", "Remote — Worldwide", FL, "wellfound", "$50-80/hr", ["python", "django"], 3),
+    ("s28", "Contract DevOps Engineer", "Northwind Cloud", "Remote — India", CT, "hirist", "₹3,000-5,000/hr", ["kubernetes", "terraform"], 1),
+    ("s29", "Freelance Technical Writer", "Docflow", "Remote — Worldwide", FL, "wellfound", "$40-70/hr", ["documentation", "api"], 5),
+
+    # ── Global remote ──────────────────────────────────────────────────────
+    ("s30", "Senior Python Engineer", "Vela AI", "Remote — US", FT, "remotive", "$160k-210k", ["python", "llm", "rag"], 0),
+    ("s31", "Staff Software Engineer", "Meridian", "Remote — US/Canada", FT, "remotive", "$200k-250k", ["python", "architecture"], 1),
+    ("s32", "Full-Stack Engineer", "Aurora Commerce", "Remote — US", FT, "indeed", "$130k-170k", ["typescript", "react", "node"], 2),
+    ("s33", "Platform Engineer", "Solstice Systems", "Remote — EMEA", FT, "remotive", "€90k-120k", ["go", "kubernetes"], 2),
+    ("s34", "Part-Time Data Analyst", "Harbor Metrics", "Remote — Worldwide", PT, "remotive", "$45-65/hr", ["sql", "python"], 4),
 ]
 
 
 def sample_jobs() -> list[RawJob]:
-    """Return a fresh copy of the sample jobs (timestamps fixed at import)."""
-    return [dict(job) for job in SAMPLE_JOBS]  # type: ignore[misc]
+    """Return a fresh list of sample jobs."""
+    jobs: list[RawJob] = []
+    for ext, title, company, location, etype, source, salary, tags, days in _ROWS:
+        jobs.append(
+            RawJob(
+                source=source,
+                external_id=ext,
+                title=title,
+                company=company,
+                location=location,
+                remote="remote" in location.lower(),
+                employment_type=etype,
+                category=None,
+                tags=tags,
+                description=(
+                    f"{title} role at {company} ({location}). "
+                    f"Tech: {', '.join(tags)}. "
+                    "This is a sample listing for demo/offline use."
+                ),
+                url=f"https://example.com/jobs/{ext}",
+                salary_text=salary,
+                posted_at=_NOW - timedelta(days=days),
+            )
+        )
+    return jobs
