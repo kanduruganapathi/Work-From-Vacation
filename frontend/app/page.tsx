@@ -232,6 +232,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [feedKey, setFeedKey] = useState(0); // bump to reload the job feed
   const [task, setTask] = useState<Task | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [resumeEdit, setResumeEdit] = useState(false);
 
   async function reloadApplications() {
     setApplications(await api.listApplications());
@@ -428,103 +429,192 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         </div>
       )}
 
+      {/* Quick actions toolbar */}
+      <div className="toolbar">
+        <button className="btn secondary" onClick={refresh} disabled={busy}>
+          ⟳ Refresh jobs
+        </button>
+        <button className="btn secondary" onClick={seed} disabled={busy}>
+          ＋ Load sample jobs
+        </button>
+        <span className="toolbar-sep" />
+        <button
+          className="btn"
+          onClick={runHunt}
+          disabled={busy || !aiEnabled}
+          title={aiEnabled ? "" : "Set ANTHROPIC_API_KEY on the server"}
+        >
+          🤖 Run AI hunt
+        </button>
+        <button
+          className="btn"
+          onClick={scoreNew}
+          disabled={busy || !aiEnabled}
+          title={aiEnabled ? "" : "Set ANTHROPIC_API_KEY on the server"}
+        >
+          ⚡ Score new
+        </button>
+        <button
+          className="btn"
+          onClick={batchApply}
+          disabled={busy || !aiEnabled}
+          title={aiEnabled ? "" : "Set ANTHROPIC_API_KEY on the server"}
+        >
+          🚀 Auto-apply top
+        </button>
+      </div>
+
       {/* Profile */}
       <h2 className="section-title">Your profile</h2>
       <div className="card">
-        <label>Headline</label>
-        <input
-          value={profile.headline || ""}
-          onChange={(e) => setProfile({ ...profile, headline: e.target.value })}
-        />
-        <label>Skills (comma separated)</label>
-        <input
-          value={list(profile.skills)}
-          onChange={(e) =>
-            setProfile({ ...profile, skills: parse(e.target.value) })
-          }
-        />
-        <label>Desired titles (comma separated)</label>
-        <input
-          value={list(profile.desired_titles)}
-          onChange={(e) =>
-            setProfile({ ...profile, desired_titles: parse(e.target.value) })
-          }
-        />
-        <label>Employment types (full_time, contract, freelance, ...)</label>
-        <input
-          value={list(profile.desired_employment_types)}
-          onChange={(e) =>
-            setProfile({
-              ...profile,
-              desired_employment_types: parse(e.target.value),
-            })
-          }
-        />
-        <label>Resume</label>
-        <div className="row" style={{ gap: 8, marginTop: 4 }}>
-          <label
-            className="btn secondary"
-            style={{ margin: 0, cursor: "pointer", display: "inline-block" }}
-          >
-            📄 Upload PDF / text
+        <div className="form-grid">
+          <div className="full">
+            <label>Headline</label>
             <input
-              type="file"
-              accept=".pdf,.txt,.md,text/plain,application/pdf"
-              style={{ display: "none" }}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) uploadResume(f);
-                e.target.value = "";
-              }}
+              placeholder="e.g. Senior AI Engineer"
+              value={profile.headline || ""}
+              onChange={(e) => setProfile({ ...profile, headline: e.target.value })}
             />
-          </label>
-          <span className="muted">
-            {profile.resume_text
-              ? `${profile.resume_text.length} characters on file`
-              : "No resume yet"}
-          </span>
+          </div>
+          <div>
+            <label>Skills (comma separated)</label>
+            <input
+              placeholder="python, fastapi, llm"
+              value={list(profile.skills)}
+              onChange={(e) => setProfile({ ...profile, skills: parse(e.target.value) })}
+            />
+          </div>
+          <div>
+            <label>Desired titles</label>
+            <input
+              placeholder="AI Engineer, Backend Engineer"
+              value={list(profile.desired_titles)}
+              onChange={(e) =>
+                setProfile({ ...profile, desired_titles: parse(e.target.value) })
+              }
+            />
+          </div>
+          <div>
+            <label>Employment types</label>
+            <input
+              placeholder="full_time, contract, freelance"
+              value={list(profile.desired_employment_types)}
+              onChange={(e) =>
+                setProfile({
+                  ...profile,
+                  desired_employment_types: parse(e.target.value),
+                })
+              }
+            />
+          </div>
+          <div>
+            <label>Preferred locations</label>
+            <input
+              placeholder="Bangalore, Remote"
+              value={list(profile.locations)}
+              onChange={(e) =>
+                setProfile({ ...profile, locations: parse(e.target.value) })
+              }
+            />
+          </div>
+          <div>
+            <label>Years of experience</label>
+            <input
+              type="number"
+              min={0}
+              max={50}
+              value={profile.years_experience ?? ""}
+              onChange={(e) =>
+                setProfile({
+                  ...profile,
+                  years_experience: e.target.value ? Number(e.target.value) : null,
+                })
+              }
+            />
+          </div>
+          <div className="remote-row">
+            <label className="switch" style={{ marginTop: 22 }}>
+              <input
+                type="checkbox"
+                checked={profile.remote_only}
+                onChange={(e) =>
+                  setProfile({ ...profile, remote_only: e.target.checked })
+                }
+              />
+              <span className="slider" />
+            </label>
+            <span className="muted" style={{ marginTop: 24 }}>
+              Remote roles only
+            </span>
+          </div>
         </div>
-        <textarea
-          rows={5}
-          placeholder="...or paste your resume here"
-          value={profile.resume_text || ""}
-          onChange={(e) =>
-            setProfile({ ...profile, resume_text: e.target.value })
-          }
-        />
-        <div className="row" style={{ marginTop: 14 }}>
+
+        {/* Resume card */}
+        <div className="resume-card">
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <strong>📄 Resume</strong>
+            <span className="muted">
+              {profile.resume_text
+                ? `${profile.resume_text.length.toLocaleString()} characters on file`
+                : "No resume yet"}
+            </span>
+          </div>
+
+          {profile.resume_text && !resumeEdit && (
+            <div className="resume-preview">
+              {profile.resume_text.split("\n").slice(0, 6).join("\n")}
+              {profile.resume_text.split("\n").length > 6 ? "\n…" : ""}
+            </div>
+          )}
+
+          {resumeEdit && (
+            <textarea
+              rows={10}
+              placeholder="Paste your resume here..."
+              value={profile.resume_text || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, resume_text: e.target.value })
+              }
+            />
+          )}
+
+          <div className="row" style={{ marginTop: 10, gap: 8 }}>
+            <label className="btn secondary" style={{ margin: 0, cursor: "pointer" }}>
+              {profile.resume_text ? "Replace" : "Upload PDF / text"}
+              <input
+                type="file"
+                accept=".pdf,.txt,.md,text/plain,application/pdf"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) uploadResume(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <button
+              className="btn secondary"
+              onClick={() => setResumeEdit((v) => !v)}
+            >
+              {resumeEdit ? "Done editing" : profile.resume_text ? "✎ Edit" : "Paste"}
+            </button>
+            {profile.resume_text && (
+              <button
+                className="link-btn"
+                onClick={() => setProfile({ ...profile, resume_text: "" })}
+              >
+                Clear
+              </button>
+            )}
+            <span className="muted" style={{ fontSize: 12 }}>
+              Feeds AI matching, tailoring & cover letters.
+            </span>
+          </div>
+        </div>
+
+        <div className="row" style={{ marginTop: 16 }}>
           <button className="btn" onClick={saveProfile} disabled={busy}>
             Save profile
-          </button>
-          <button className="btn secondary" onClick={refresh} disabled={busy}>
-            Refresh jobs
-          </button>
-          <button className="btn secondary" onClick={seed} disabled={busy}>
-            Load sample jobs
-          </button>
-          <button
-            className="btn"
-            onClick={runHunt}
-            disabled={busy || !aiEnabled}
-            title={aiEnabled ? "" : "Set ANTHROPIC_API_KEY on the server"}
-          >
-            🤖 Run AI job hunt
-          </button>
-          <button
-            className="btn"
-            onClick={scoreNew}
-            disabled={busy || !aiEnabled}
-            title={aiEnabled ? "" : "Set ANTHROPIC_API_KEY on the server"}
-          >
-            ⚡ Score new jobs
-          </button>
-          <button
-            className="btn"
-            onClick={batchApply}
-            disabled={busy || !aiEnabled}
-            title={aiEnabled ? "" : "Set ANTHROPIC_API_KEY on the server"}
-          >
-            🚀 Auto-apply top matches
           </button>
         </div>
       </div>

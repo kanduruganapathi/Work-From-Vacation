@@ -62,7 +62,7 @@ export default function ThreeBackground() {
     world.add(core);
 
     // ── Orbiting "job" nodes (points on a shell) ───────────────────────
-    const NODE_COUNT = 900;
+    const NODE_COUNT = 520;
     const positions = new Float32Array(NODE_COUNT * 3);
     const colors = new Float32Array(NODE_COUNT * 3);
     const blue = new THREE.Color(0x4f9dde);
@@ -89,10 +89,10 @@ export default function ThreeBackground() {
     const nodes = new THREE.Points(
       nodesGeo,
       new THREE.PointsMaterial({
-        size: 0.05,
+        size: 0.045,
         vertexColors: true,
         transparent: true,
-        opacity: 0.85,
+        opacity: 0.42,
         sizeAttenuation: true,
       })
     );
@@ -114,7 +114,7 @@ export default function ThreeBackground() {
         color: 0x6b7686,
         size: 0.04,
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.28,
       })
     );
     scene.add(stars);
