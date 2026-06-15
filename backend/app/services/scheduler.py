@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import datetime, timezone
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import select
@@ -21,8 +22,9 @@ from sqlalchemy import select
 from app.agents.client import ai_enabled
 from app.config import settings
 from app.database import SessionLocal
-from app.models import User
-from app.services import aggregator, scoring
+from app.models import SavedSearch, User
+from app.services import aggregator, scoring, search
+from app.services.notifications import create_notification
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,9 @@ def _run_cycle() -> None:
             logger.info("Scheduler refresh: fetched=%d inserted=%d", fetched, inserted)
         except Exception as exc:
             logger.warning("Scheduler refresh failed: %s", exc)
+
+        # Saved-search alerts (no AI required).
+        _check_saved_searches(db)
 
         if not ai_enabled():
             return
@@ -66,6 +71,31 @@ def _run_cycle() -> None:
                 logger.warning("Scoring/autopilot failed for user %s: %s", user.id, exc)
     finally:
         db.close()
+
+
+def _check_saved_searches(db) -> None:
+    """Notify users when new jobs match their alert-enabled saved searches."""
+    searches = db.scalars(
+        select(SavedSearch).where(SavedSearch.alert_enabled.is_(True))
+    ).all()
+    for s in searches:
+        try:
+            new_count = search.count_matching_since(db, s.params or {}, s.last_checked_at)
+            if new_count > 0:
+                user = db.get(User, s.user_id)
+                if user:
+                    create_notification(
+                        db,
+                        user,
+                        title=f"{new_count} new job{'s' if new_count != 1 else ''} for “{s.name}”",
+                        body="New listings match your saved search.",
+                        type="saved_search",
+                    )
+            s.last_checked_at = datetime.now(timezone.utc)
+            db.commit()
+        except Exception as exc:
+            logger.warning("Saved-search check failed for %s: %s", s.id, exc)
+            db.rollback()
 
 
 def start() -> None:

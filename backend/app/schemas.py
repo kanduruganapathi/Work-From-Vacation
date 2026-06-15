@@ -89,6 +89,27 @@ class JobSearchResult(BaseModel):
     facets: JobFacets = JobFacets()
 
 
+class SavedSearchCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    params: dict = {}
+    alert_enabled: bool = True
+
+
+class SavedSearchUpdate(BaseModel):
+    name: str | None = None
+    params: dict | None = None
+    alert_enabled: bool | None = None
+
+
+class SavedSearchOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    params: dict
+    alert_enabled: bool
+    created_at: datetime
+
+
 # ── Matching ──────────────────────────────────────────────────────────────
 class JobMatchOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)

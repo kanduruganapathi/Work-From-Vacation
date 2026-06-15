@@ -234,3 +234,20 @@ class Notification(Base):
     )
     read: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class SavedSearch(Base):
+    """A named, re-runnable search. With ``alert_enabled``, the scheduler
+    notifies the user when new jobs match it."""
+
+    __tablename__ = "saved_searches"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    params: Mapped[dict] = mapped_column(JSON, default=dict)
+    alert_enabled: Mapped[bool] = mapped_column(default=True)
+    last_checked_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

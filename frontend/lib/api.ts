@@ -140,6 +140,14 @@ export interface JobSearchResult {
   facets: JobFacets;
 }
 
+export interface SavedSearch {
+  id: number;
+  name: string;
+  params: Record<string, string | boolean | number>;
+  alert_enabled: boolean;
+  created_at: string;
+}
+
 export interface Profile {
   skills: string[];
   desired_titles: string[];
@@ -212,6 +220,21 @@ export const api = {
     const qs = new URLSearchParams(params).toString();
     return request<JobSearchResult>(`/api/jobs/search${qs ? `?${qs}` : ""}`);
   },
+
+  // Saved searches
+  savedSearches: () => request<SavedSearch[]>("/api/saved-searches"),
+  createSavedSearch: (name: string, params: Record<string, string>) =>
+    request<SavedSearch>("/api/saved-searches", {
+      method: "POST",
+      body: JSON.stringify({ name, params, alert_enabled: true }),
+    }),
+  updateSavedSearch: (id: number, patch: { alert_enabled?: boolean; name?: string }) =>
+    request<SavedSearch>(`/api/saved-searches/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  deleteSavedSearch: (id: number) =>
+    request<void>(`/api/saved-searches/${id}`, { method: "DELETE" }),
   refreshJobs: () =>
     request<{ fetched: number; inserted: number; sources: Record<string, number> }>(
       "/api/jobs/refresh",

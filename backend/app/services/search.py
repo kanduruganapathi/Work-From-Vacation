@@ -105,6 +105,23 @@ def search_jobs(
     return total, items, facets
 
 
+def count_matching_since(db: Session, params: dict, since: datetime) -> int:
+    """Count jobs matching a saved search's params that were fetched after
+    ``since`` — used to drive saved-search alerts."""
+    content = _content_conditions(
+        params.get("q"), params.get("tag"), params.get("posted_within_days")
+    )
+    dim: list[ColumnElement[bool]] = [Job.fetched_at > since]
+    et = params.get("employment_type")
+    if et:
+        dim.append(Job.employment_type == et)
+    if params.get("remote") is not None:
+        dim.append(Job.remote.is_(bool(params["remote"])))
+    if params.get("source"):
+        dim.append(Job.source == params["source"])
+    return db.scalar(select(func.count(Job.id)).where(*content, *dim)) or 0
+
+
 def _facets(
     db: Session,
     content: list[ColumnElement[bool]],

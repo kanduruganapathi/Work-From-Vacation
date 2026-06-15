@@ -16,6 +16,7 @@ from app.api.routes import (
     jobs,
     notifications,
     profiles,
+    saved_searches,
 )
 from app.config import settings
 from app.database import init_db
@@ -55,6 +56,7 @@ app.include_router(jobs.router)
 app.include_router(applications.router)
 app.include_router(agents.router)
 app.include_router(notifications.router)
+app.include_router(saved_searches.router)
 
 
 @app.get("/health", tags=["meta"])

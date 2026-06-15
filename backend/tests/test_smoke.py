@@ -162,6 +162,50 @@ def test_job_search() -> None:
     assert multi["total"] >= 1
 
 
+def test_saved_searches_crud() -> None:
+    headers = _auth_headers("savedsearch@example.com")
+    created = client.post(
+        "/api/saved-searches",
+        json={"name": "Python remote", "params": {"q": "python", "remote": True}},
+        headers=headers,
+    )
+    assert created.status_code == 201
+    sid = created.json()["id"]
+    assert created.json()["alert_enabled"] is True
+
+    listed = client.get("/api/saved-searches", headers=headers)
+    assert len(listed.json()) == 1
+
+    patched = client.patch(
+        f"/api/saved-searches/{sid}", json={"alert_enabled": False}, headers=headers
+    )
+    assert patched.json()["alert_enabled"] is False
+
+    assert (
+        client.delete(f"/api/saved-searches/{sid}", headers=headers).status_code == 204
+    )
+
+
+def test_count_matching_since() -> None:
+    from datetime import datetime, timedelta, timezone
+
+    from app.database import SessionLocal
+    from app.services import search
+
+    client.post("/api/jobs/seed")
+    db = SessionLocal()
+    try:
+        # All seeded jobs were fetched after this point.
+        since = datetime.now(timezone.utc) - timedelta(hours=1)
+        count = search.count_matching_since(db, {"q": "python"}, since)
+        assert count >= 1
+        # Nothing fetched in the future.
+        future = datetime.now(timezone.utc) + timedelta(hours=1)
+        assert search.count_matching_since(db, {"q": "python"}, future) == 0
+    finally:
+        db.close()
+
+
 def test_notifications_empty_then_list() -> None:
     headers = _auth_headers("notify@example.com")
     resp = client.get("/api/notifications", headers=headers)

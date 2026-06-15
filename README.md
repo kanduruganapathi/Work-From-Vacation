@@ -29,6 +29,8 @@ remote-job nodes) for a polished, product-grade landing and dashboard.
 - **Actionable materials** — the AI-tailored resume and cover letter on each
   application can be viewed, **edited, copied, downloaded, or regenerated** from
   the tracker.
+- **Saved searches + alerts** — save any query (keyword + filters); the
+  scheduler notifies you when new jobs match it. No AI key required.
 - **Background AI tasks** — the orchestrated hunt, new-job scoring, and batch
   auto-apply run as background jobs with **live progress** (poll `/api/ai/tasks/{id}`).
 - **Scheduler** — when `SCHEDULER_ENABLED=true`, periodically refreshes jobs,
