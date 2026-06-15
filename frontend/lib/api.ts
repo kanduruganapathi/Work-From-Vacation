@@ -61,6 +61,8 @@ export interface Job {
   source: string;
   title: string;
   company: string | null;
+  company_type: string | null;
+  company_tier: string | null;
   location: string | null;
   remote: boolean;
   employment_type: string;
@@ -131,6 +133,9 @@ export interface InterviewPrep {
 export interface JobFacets {
   employment_types: Record<string, number>;
   sources: Record<string, number>;
+  company_types: Record<string, number>;
+  company_tiers: Record<string, number>;
+  locations: Record<string, number>;
   remote: number;
 }
 

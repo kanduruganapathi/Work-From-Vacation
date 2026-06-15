@@ -38,6 +38,8 @@ _ADDED_COLUMNS: list[tuple[str, str, str]] = [
     ("profiles", "autopilot_enabled", "BOOLEAN DEFAULT 0"),
     ("profiles", "autopilot_min_score", "INTEGER DEFAULT 85"),
     ("profiles", "autopilot_daily_limit", "INTEGER DEFAULT 5"),
+    ("jobs", "company_type", "VARCHAR(32)"),
+    ("jobs", "company_tier", "VARCHAR(16)"),
 ]
 
 
@@ -65,3 +67,23 @@ def init_db() -> None:
 
     Base.metadata.create_all(bind=engine)
     _ensure_columns()
+    _backfill_company_classification()
+
+
+def _backfill_company_classification() -> None:
+    """Classify any jobs that don't yet have a company_type (e.g. rows that
+    predate the columns)."""
+    from app.models import Job
+    from app.services.company_classifier import classify
+
+    db = SessionLocal()
+    try:
+        from sqlalchemy import select
+
+        jobs = db.scalars(select(Job).where(Job.company_type.is_(None))).all()
+        for job in jobs:
+            job.company_type, job.company_tier = classify(job.company)
+        if jobs:
+            db.commit()
+    finally:
+        db.close()

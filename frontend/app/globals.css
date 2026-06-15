@@ -565,6 +565,25 @@ pre {
   border-color: #8ce0c4;
 }
 
+/* Company type / tier badges */
+.badge.company-product {
+  color: #6fb3f0;
+  border-color: #6fb3f0;
+}
+.badge.company-startup {
+  color: #e0a96c;
+  border-color: #e0a96c;
+}
+.badge.company-mnc,
+.badge.company-service {
+  color: #b48ce0;
+  border-color: #b48ce0;
+}
+.badge.tier {
+  color: var(--accent-2);
+  border-color: var(--accent-2);
+}
+
 /* Application status colors */
 .badge.status-saved {
   color: #9aa3b0;

@@ -43,6 +43,18 @@ const STATUS_LABEL: Record<ApplicationStatus, string> = {
   withdrawn: "Withdrawn",
 };
 
+const COMPANY_LABEL: Record<string, string> = {
+  product: "Product",
+  startup: "Startup",
+  mnc: "MNC",
+  service: "Service",
+};
+const TIER_LABEL: Record<string, string> = {
+  tier1: "Tier 1",
+  tier2: "Tier 2",
+  tier3: "Tier 3",
+};
+
 const stripHtml = (s: string) => s.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
 export default function JobFeed({
@@ -62,6 +74,9 @@ export default function JobFeed({
   const [source, setSource] = useState("");
   const [recency, setRecency] = useState("");
   const [tag, setTag] = useState("");
+  const [location, setLocation] = useState("");
+  const [companyType, setCompanyType] = useState("");
+  const [companyTier, setCompanyTier] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [total, setTotal] = useState(0);
   const [facets, setFacets] = useState<JobFacets | null>(null);
@@ -83,6 +98,9 @@ export default function JobFeed({
     if (source) params.source = source;
     if (recency) params.posted_within_days = recency;
     if (tag) params.tag = tag;
+    if (location.trim()) params.location = location.trim();
+    if (companyType) params.company_type = companyType;
+    if (companyTier) params.company_tier = companyTier;
     return params;
   }
 
@@ -101,13 +119,13 @@ export default function JobFeed({
     setFacets(res.facets);
   }
 
-  // Reload whenever any filter/sort/tab/source/recency/tag changes.
+  // Reload whenever a select/tab filter changes.
   useEffect(() => {
     load(tab, 0, false).catch((e) => onStatus((e as Error).message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, sort, source, recency, tag]);
+  }, [tab, sort, source, recency, tag, companyType, companyTier]);
 
-  // Debounced search-as-you-type on the keyword box.
+  // Debounced search-as-you-type on the text boxes (keyword + location).
   const firstRun = useRef(true);
   useEffect(() => {
     if (firstRun.current) {
@@ -119,7 +137,7 @@ export default function JobFeed({
     }, 400);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
+  }, [q, location]);
 
   useEffect(() => {
     api.savedSearches().then(setSaved).catch(() => {});
@@ -151,6 +169,9 @@ export default function JobFeed({
     setSource((p.source as string) || "");
     setRecency((p.posted_within_days as string)?.toString() || "");
     setTag((p.tag as string) || "");
+    setLocation((p.location as string) || "");
+    setCompanyType((p.company_type as string) || "");
+    setCompanyTier((p.company_tier as string) || "");
     if (p.remote) setTab("remote");
     else if (p.employment_type) setTab(p.employment_type as string);
     else setTab("all");
@@ -310,6 +331,54 @@ export default function JobFeed({
             </option>
           ))}
         </select>
+        <input
+          placeholder="Location..."
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          list="loc-list"
+          style={{ width: 160, marginTop: 0 }}
+        />
+        <datalist id="loc-list">
+          {facets &&
+            Object.keys(facets.locations).map((l) => <option key={l} value={l} />)}
+        </datalist>
+        <select
+          value={companyType}
+          onChange={(e) => setCompanyType(e.target.value)}
+          style={{ width: "auto", marginTop: 0 }}
+          title="Company type"
+        >
+          <option value="">Any company</option>
+          {[
+            ["product", "Product-based"],
+            ["startup", "Startup"],
+            ["mnc", "MNC / Service"],
+            ["service", "Services"],
+          ].map(([v, label]) => (
+            <option key={v} value={v}>
+              {label}
+              {facets?.company_types[v] ? ` (${facets.company_types[v]})` : ""}
+            </option>
+          ))}
+        </select>
+        <select
+          value={companyTier}
+          onChange={(e) => setCompanyTier(e.target.value)}
+          style={{ width: "auto", marginTop: 0 }}
+          title="Company tier"
+        >
+          <option value="">Any tier</option>
+          {[
+            ["tier1", "Tier 1"],
+            ["tier2", "Tier 2"],
+            ["tier3", "Tier 3"],
+          ].map(([v, label]) => (
+            <option key={v} value={v}>
+              {label}
+              {facets?.company_tiers[v] ? ` (${facets.company_tiers[v]})` : ""}
+            </option>
+          ))}
+        </select>
         {tag && (
           <span className="active-filter">
             tag: {tag}
@@ -357,6 +426,14 @@ export default function JobFeed({
                   {job.employment_type.replace("_", " ")}
                 </span>
                 {job.remote && <span className="badge remote">remote</span>}
+                {job.company_type && COMPANY_LABEL[job.company_type] && (
+                  <span className={`badge company-${job.company_type}`}>
+                    {COMPANY_LABEL[job.company_type]}
+                  </span>
+                )}
+                {job.company_tier && (
+                  <span className="badge tier">{TIER_LABEL[job.company_tier]}</span>
+                )}
               </div>
               <div style={{ marginTop: 8 }}>
                 {job.tags.slice(0, 5).map((t) => (

@@ -29,6 +29,9 @@ remote-job nodes) for a polished, product-grade landing and dashboard.
 - **Actionable materials** — the AI-tailored resume and cover letter on each
   application can be viewed, **edited, copied, downloaded, or regenerated** from
   the tracker.
+- **Rich filtering** — keyword, employment type, remote, source, **location**,
+  and **company classification** (product / startup / MNC / service and
+  **tier 1/2/3**), with facet counts and saved searches.
 - **Saved searches + alerts** — save any query (keyword + filters); the
   scheduler notifies you when new jobs match it. No AI key required.
 - **Background AI tasks** — the orchestrated hunt, new-job scoring, and batch

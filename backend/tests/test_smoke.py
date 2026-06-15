@@ -161,6 +161,26 @@ def test_job_search() -> None:
     multi = client.get("/api/jobs/search?q=senior+engineer").json()
     assert multi["total"] >= 1
 
+    # Company classification facets + filter.
+    assert "company_types" in res["facets"]
+    assert "company_tiers" in res["facets"]
+    assert "locations" in res["facets"]
+    product = client.get("/api/jobs/search?company_type=product").json()
+    assert all(i["company_type"] == "product" for i in product["items"])
+
+    # Location substring filter.
+    us = client.get("/api/jobs/search?location=US").json()
+    assert all("us" in (i["location"] or "").lower() for i in us["items"])
+
+
+def test_company_classifier() -> None:
+    from app.services.company_classifier import classify
+
+    assert classify("Google") == ("product", "tier1")
+    assert classify("Infosys") == ("mnc", "tier1")
+    assert classify("Vela AI")[0] == "startup"
+    assert classify(None) == ("other", None)
+
 
 def test_saved_searches_crud() -> None:
     headers = _auth_headers("savedsearch@example.com")

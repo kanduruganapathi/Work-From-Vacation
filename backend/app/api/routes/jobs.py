@@ -48,6 +48,11 @@ def search_jobs(
     remote: bool | None = None,
     source: str | None = None,
     tag: str | None = Query(default=None, description="Match a single tag/skill"),
+    location: str | None = Query(default=None, description="Match a location substring"),
+    company_type: str | None = Query(
+        default=None, description="product | startup | mnc | service | other"
+    ),
+    company_tier: str | None = Query(default=None, description="tier1 | tier2 | tier3"),
     posted_within_days: int | None = Query(default=None, ge=1, le=365),
     sort: str = Query(default="recent", pattern="^(recent|relevance)$"),
     limit: int = Query(default=24, ge=1, le=100),
@@ -62,6 +67,9 @@ def search_jobs(
         remote=remote,
         source=source,
         tag=tag,
+        location=location,
+        company_type=company_type,
+        company_tier=company_tier,
         posted_within_days=posted_within_days,
         sort=sort,
         limit=limit,

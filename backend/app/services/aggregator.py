@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Job
+from app.services.company_classifier import classify
 from app.sources import JobSource, RawJob, active_sources
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,9 @@ def upsert_jobs(db: Session, raw_jobs: list[RawJob]) -> tuple[int, dict[str, int
         if exists:
             continue
 
-        db.add(Job(**raw))
+        job = Job(**raw)
+        job.company_type, job.company_tier = classify(job.company)
+        db.add(job)
         inserted += 1
         per_source[source] = per_source.get(source, 0) + 1
 

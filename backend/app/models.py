@@ -123,6 +123,9 @@ class Job(Base):
 
     title: Mapped[str] = mapped_column(String(512), index=True)
     company: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    # Derived classification: product / startup / mnc / service / other, and tier.
+    company_type: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    company_tier: Mapped[str | None] = mapped_column(String(16), nullable=True, index=True)
     location: Mapped[str | None] = mapped_column(String(255), nullable=True)
     remote: Mapped[bool] = mapped_column(default=False)
     employment_type: Mapped[EmploymentType] = mapped_column(

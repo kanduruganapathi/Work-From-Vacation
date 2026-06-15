@@ -59,6 +59,8 @@ class JobOut(BaseModel):
     source: str
     title: str
     company: str | None = None
+    company_type: str | None = None
+    company_tier: str | None = None
     location: str | None = None
     remote: bool
     employment_type: EmploymentType
@@ -80,6 +82,9 @@ class RefreshResult(BaseModel):
 class JobFacets(BaseModel):
     employment_types: dict[str, int] = {}
     sources: dict[str, int] = {}
+    company_types: dict[str, int] = {}
+    company_tiers: dict[str, int] = {}
+    locations: dict[str, int] = {}
     remote: int = 0
 
 
