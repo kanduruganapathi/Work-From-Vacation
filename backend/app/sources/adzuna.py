@@ -18,8 +18,8 @@ API_URL = "https://api.adzuna.com/v1/api/jobs/{country}/search/1"
 class AdzunaSource(JobSource):
     name = "adzuna"
 
-    def __init__(self, country: str = "us") -> None:
-        self.country = country
+    def __init__(self, country: str | None = None) -> None:
+        self.country = country or settings.adzuna_country
 
     @property
     def configured(self) -> bool:

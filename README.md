@@ -148,12 +148,23 @@ docker compose up --build
 | We Work Remotely | RSS | none | Remote feed (in `EXTRA_RSS_FEEDS`, default) |
 | Greenhouse | API | none | Per-company boards — fan-out over `ATS_GREENHOUSE_SLUGS` (default: stripe, airbnb, dropbox, coinbase, databricks, figma, gitlab, reddit) |
 | Lever | API | none | Per-company boards — fan-out over `ATS_LEVER_SLUGS` |
-| Adzuna | API | key | Full-time / contract aggregator; auto-enabled when `ADZUNA_APP_ID`/`ADZUNA_APP_KEY` are set |
+| Adzuna | API | key | Aggregator incl. **India** (`ADZUNA_COUNTRY=in`); auto-enabled when `ADZUNA_APP_ID`/`ADZUNA_APP_KEY` are set |
+| Jooble | API | key | Worldwide aggregator, strong **India** coverage; set `JOOBLE_API_KEY` |
+| Careerjet | API | key | Aggregator, India locale `en_IN`; set `CAREERJET_AFFID` |
 | Generic RSS | RSS | none | Add any feed URLs to `EXTRA_RSS_FEEDS` |
 | Scraper | scrape | none | `ScraperSource(url)` for boards without an API/feed. **Disabled by default; respect each site's ToS.** |
 
 Add more employer boards by appending company slugs to `ATS_GREENHOUSE_SLUGS` /
 `ATS_LEVER_SLUGS`, or feed URLs to `EXTRA_RSS_FEEDS` — no code changes needed.
+
+### A note on Naukri / LinkedIn / Instahyre / Cutshort / Wellfound
+
+These boards **do not offer a free public jobs API**, and scraping them violates
+their Terms of Service. They are intentionally **not** connected directly. To get
+real Indian listings (which originate from these boards), use the **aggregators**
+that legitimately syndicate them and expose APIs — **Adzuna (India), Jooble, and
+Careerjet** — by adding their free keys above. The "Load samples" button adds
+clearly-labelled demo data (`source: sample`), not live listings.
 
 Connectors live in [`backend/app/sources/`](backend/app/sources/) and implement a
 common `JobSource` interface, so adding a new source is one file.

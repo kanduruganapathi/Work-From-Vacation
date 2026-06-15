@@ -119,10 +119,13 @@ _ROWS = [
 def sample_jobs() -> list[RawJob]:
     """Return a fresh list of sample jobs."""
     jobs: list[RawJob] = []
-    for ext, title, company, location, etype, source, salary, tags, days in _ROWS:
+    # Labelled "sample" (not the real board names) — these are demo listings,
+    # not live fetches. Use real connectors (Adzuna/Jooble/Careerjet + the API
+    # sources) for actual jobs.
+    for ext, title, company, location, etype, _board, salary, tags, days in _ROWS:
         jobs.append(
             RawJob(
-                source=source,
+                source="sample",
                 external_id=ext,
                 title=title,
                 company=company,

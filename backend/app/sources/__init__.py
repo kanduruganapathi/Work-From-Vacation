@@ -10,9 +10,11 @@ from app.config import settings
 from app.sources.adzuna import AdzunaSource
 from app.sources.arbeitnow import ArbeitnowSource
 from app.sources.base import JobSource, RawJob
+from app.sources.careerjet import CareerjetSource
 from app.sources.greenhouse import GreenhouseSource
 from app.sources.himalayas import HimalayasSource
 from app.sources.jobicy import JobicySource
+from app.sources.jooble import JoobleSource
 from app.sources.lever import LeverSource
 from app.sources.remoteok import RemoteOKSource
 from app.sources.remotive import RemotiveSource
@@ -35,10 +37,11 @@ def active_sources() -> list[JobSource]:
     """All sources to run on a refresh, assembled from config."""
     sources: list[JobSource] = list(DEFAULT_SOURCES)
 
-    # Credential-gated.
-    adzuna = AdzunaSource()
-    if adzuna.configured:
-        sources.append(adzuna)
+    # Credential-gated aggregators (incl. India coverage). Add free keys to
+    # enable real Naukri-style listings via these legitimate aggregators.
+    for keyed in (AdzunaSource(), JoobleSource(), CareerjetSource()):
+        if keyed.configured:
+            sources.append(keyed)
 
     # Per-company ATS boards (fan-out).
     sources += [GreenhouseSource(s) for s in settings.ats_greenhouse_slugs]

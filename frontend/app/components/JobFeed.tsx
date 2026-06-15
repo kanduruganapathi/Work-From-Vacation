@@ -277,9 +277,9 @@ export default function JobFeed({
     <>
       <div className="fetch-bar">
         <span className="muted">
-          Pull fresh jobs from your connected boards (Remotive, RemoteOK,
-          Jobicy, Himalayas, The Muse, Greenhouse &amp; Lever company boards,
-          RSS feeds…).
+          “Fetch live jobs” pulls from real APIs (Remotive, RemoteOK, Jobicy,
+          Himalayas, The Muse, Greenhouse/Lever boards, and — with a free key —
+          Adzuna/Jooble/Careerjet for India). “Load samples” adds demo data.
         </span>
         <div className="row" style={{ gap: 8 }}>
           <button className="btn" onClick={onRefresh} disabled={busy}>

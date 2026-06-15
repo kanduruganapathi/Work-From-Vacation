@@ -23,9 +23,21 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     ai_model: str = "claude-opus-4-8"
 
-    # Optional source credentials
+    # Default query/location for keyed aggregators (Adzuna/Jooble/Careerjet).
+    jobs_default_query: str = "software engineer"
+    jobs_default_location: str = "India"
+
+    # Adzuna (free key) — covers India when adzuna_country="in".
     adzuna_app_id: str | None = None
     adzuna_app_key: str | None = None
+    adzuna_country: str = "in"
+
+    # Jooble (free key) — worldwide aggregator, strong India coverage.
+    jooble_api_key: str | None = None
+
+    # Careerjet (free affiliate id) — India locale en_IN.
+    careerjet_affid: str | None = None
+    careerjet_locale: str = "en_IN"
 
     # Per-company ATS boards to aggregate (Greenhouse + Lever slugs).
     # These are public boards; unreachable slugs are skipped gracefully.
