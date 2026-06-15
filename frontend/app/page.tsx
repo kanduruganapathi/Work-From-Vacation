@@ -737,8 +737,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         key={feedKey}
         aiEnabled={aiEnabled}
         trackedByJob={trackedByJob}
+        busy={busy}
         onChanged={() => reloadApplications().catch(() => {})}
         onStatus={setStatus}
+        onRefresh={refresh}
+        onSeed={seed}
       />
     </div>
   );

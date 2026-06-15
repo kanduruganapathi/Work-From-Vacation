@@ -28,14 +28,26 @@ class Settings(BaseSettings):
     adzuna_app_key: str | None = None
 
     # Per-company ATS boards to aggregate (Greenhouse + Lever slugs).
+    # These are public boards; unreachable slugs are skipped gracefully.
     ats_greenhouse_slugs: list[str] = [
         "stripe", "airbnb", "dropbox", "coinbase", "databricks", "figma",
-        "gitlab", "reddit",
+        "gitlab", "reddit", "robinhood", "brex", "ramp", "plaid", "discord",
+        "instacart", "doordash", "lyft", "pinterest", "asana", "twitch",
+        "snyk", "elastic", "gusto", "benchling", "samsara", "affirm", "chime",
+        "nerdwallet", "sofi", "opendoor", "roblox", "unity", "scaleai",
+        "retool", "webflow", "mixpanel", "amplitude", "anduril", "rippling",
+        "cockroachlabs", "hashicorp", "checkr", "flexport",
     ]
-    ats_lever_slugs: list[str] = []
-    # Extra RSS/Atom job feeds (e.g. We Work Remotely).
+    ats_lever_slugs: list[str] = [
+        "voiceflow", "kraken", "leadiq", "huma", "mux", "blend", "ironclad",
+        "veriff", "spoton",
+    ]
+    # Extra RSS/Atom remote job feeds.
     extra_rss_feeds: list[str] = [
         "https://weworkremotely.com/remote-jobs.rss",
+        "https://www.workingnomads.com/jobsrss",
+        "https://remotive.com/remote-jobs/feed",
+        "https://jobspresso.co/remote-work/feed/",
     ]
 
     # Background scheduler (periodic refresh + auto-scoring + alerts)

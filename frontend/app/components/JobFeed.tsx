@@ -60,13 +60,19 @@ const stripHtml = (s: string) => s.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ")
 export default function JobFeed({
   aiEnabled,
   trackedByJob,
+  busy,
   onChanged,
   onStatus,
+  onRefresh,
+  onSeed,
 }: {
   aiEnabled: boolean;
   trackedByJob: Record<number, Application>;
+  busy: boolean;
   onChanged: () => void;
   onStatus: (msg: string) => void;
+  onRefresh: () => void;
+  onSeed: () => void;
 }) {
   const [tab, setTab] = useState("all");
   const [q, setQ] = useState("");
@@ -269,6 +275,22 @@ export default function JobFeed({
 
   return (
     <>
+      <div className="fetch-bar">
+        <span className="muted">
+          Pull fresh jobs from your connected boards (Remotive, RemoteOK,
+          Jobicy, Himalayas, The Muse, Greenhouse &amp; Lever company boards,
+          RSS feeds…).
+        </span>
+        <div className="row" style={{ gap: 8 }}>
+          <button className="btn" onClick={onRefresh} disabled={busy}>
+            ⟳ Fetch live jobs
+          </button>
+          <button className="btn secondary" onClick={onSeed} disabled={busy}>
+            ＋ Load samples
+          </button>
+        </div>
+      </div>
+
       <div className="row" style={{ marginBottom: 12, gap: 8 }}>
         <input
           placeholder="Search title, company, skills, description..."
