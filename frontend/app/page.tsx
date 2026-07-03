@@ -25,9 +25,16 @@ const EMPTY_PROFILE: Profile = {
   headline: "",
   summary: "",
   resume_text: "",
+  full_name: "",
+  phone: "",
+  linkedin_url: "",
+  github_url: "",
+  portfolio_url: "",
+  current_location: "",
   autopilot_enabled: false,
   autopilot_min_score: 85,
   autopilot_daily_limit: 5,
+  autopilot_auto_submit: false,
 };
 
 export default function Home() {
@@ -256,9 +263,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   // Run a background AI task and reflect its progress live.
   async function runTask(
     start: () => Promise<Task>,
-    onDone?: () => Promise<void>
+    { requireAi = true }: { requireAi?: boolean } = {}
   ) {
-    if (!aiEnabled) {
+    if (requireAi && !aiEnabled) {
       setStatus("AI is disabled. Set ANTHROPIC_API_KEY on the server.");
       return;
     }
@@ -271,7 +278,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       setMatches(await api.matches());
       await reloadApplications();
       await reloadNotifications();
-      if (onDone) await onDone();
       setTimeout(() => setTask(null), 2500);
     } catch (e) {
       setStatus((e as Error).message);
@@ -350,6 +356,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       setBusy(false);
     }
   }
+
+  const submitApplication = (jobId: number, dryRun: boolean) =>
+    runTask(() => api.submitApplication(jobId, dryRun), { requireAi: false });
 
   const runHunt = () =>
     runTask(() =>
@@ -549,6 +558,62 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </div>
         </div>
 
+        {/* Contact details — used to fill real application forms */}
+        <div className="contact-head">Contact details (used to fill applications)</div>
+        <div className="form-grid">
+          <div>
+            <label>Full name</label>
+            <input
+              value={profile.full_name || ""}
+              onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+            />
+          </div>
+          <div>
+            <label>Phone</label>
+            <input
+              value={profile.phone || ""}
+              onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+            />
+          </div>
+          <div>
+            <label>Current location</label>
+            <input
+              placeholder="Bangalore, India"
+              value={profile.current_location || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, current_location: e.target.value })
+              }
+            />
+          </div>
+          <div>
+            <label>LinkedIn URL</label>
+            <input
+              value={profile.linkedin_url || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, linkedin_url: e.target.value })
+              }
+            />
+          </div>
+          <div>
+            <label>GitHub URL</label>
+            <input
+              value={profile.github_url || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, github_url: e.target.value })
+              }
+            />
+          </div>
+          <div>
+            <label>Portfolio URL</label>
+            <input
+              value={profile.portfolio_url || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, portfolio_url: e.target.value })
+              }
+            />
+          </div>
+        </div>
+
         {/* Resume card */}
         <div className="resume-card">
           <div className="row" style={{ justifyContent: "space-between" }}>
@@ -674,6 +739,29 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             />
           </div>
         </div>
+        <div
+          className="row"
+          style={{ marginTop: 14, gap: 10, alignItems: "flex-start" }}
+        >
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={profile.autopilot_auto_submit}
+              onChange={(e) =>
+                setProfile({ ...profile, autopilot_auto_submit: e.target.checked })
+              }
+            />
+            <span className="slider" />
+          </label>
+          <div>
+            <strong>Actually submit applications</strong>
+            <p className="muted" style={{ margin: "2px 0 0", fontSize: 13 }}>
+              When on, autopilot doesn&apos;t just prepare materials — it submits
+              to supported boards (Greenhouse / Lever / email). Off = prepare &
+              track only. Fill your contact details above first.
+            </p>
+          </div>
+        </div>
         <div className="row" style={{ marginTop: 12 }}>
           <button className="btn" onClick={saveProfile} disabled={busy}>
             Save autopilot
@@ -681,6 +769,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           <span className={`pill ${profile.autopilot_enabled ? "on" : "off"}`}>
             Autopilot {profile.autopilot_enabled ? "ON" : "off"}
           </span>
+          {profile.autopilot_auto_submit && (
+            <span className="pill on">Auto-submit ON</span>
+          )}
         </div>
       </div>
 
@@ -727,8 +818,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       <ApplicationsBoard
         applications={applications}
         aiEnabled={aiEnabled}
+        busy={busy}
         onChanged={() => reloadApplications().catch(() => {})}
         onStatus={setStatus}
+        onSubmit={submitApplication}
       />
 
       {/* Job feed with employment-type tabs */}

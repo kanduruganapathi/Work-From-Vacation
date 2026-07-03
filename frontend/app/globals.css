@@ -685,6 +685,34 @@ pre {
   border-color: var(--accent-2);
 }
 
+/* Submission status colors */
+.badge.sub-not_submitted {
+  color: #8a909c;
+}
+.badge.sub-submitting {
+  color: #e0a96c;
+  border-color: #e0a96c;
+}
+.badge.sub-submitted {
+  color: var(--accent-2);
+  border-color: var(--accent-2);
+}
+.badge.sub-failed {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.badge.sub-manual_needed {
+  color: #6fb3f0;
+  border-color: #6fb3f0;
+}
+
+.contact-head {
+  margin: 18px 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
 /* Application status colors */
 .badge.status-saved {
   color: #9aa3b0;

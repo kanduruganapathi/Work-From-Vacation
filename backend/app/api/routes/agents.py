@@ -37,6 +37,7 @@ from app.schemas import (
     InterviewPrepResponse,
     JobMatchOut,
     SearchStrategyResponse,
+    SubmitRequest,
     TailorResumeRequest,
     TailorResumeResponse,
     TaskOut,
@@ -139,6 +140,25 @@ def batch_apply(
         current_user.id,
         TaskKind.batch_apply,
         {"min_score": payload.min_score, "limit": payload.limit},
+    )
+
+
+@router.post("/submit", response_model=TaskOut)
+def submit_application(
+    payload: SubmitRequest,
+    current_user: User = Depends(get_current_user),
+) -> Task:
+    """Submit an application to a job for real (background).
+
+    ``dry_run=True`` (default) fills the form and screenshots it **without**
+    clicking submit — verify before going live. ``dry_run=False`` actually
+    submits to supported ATSes (Greenhouse/Lever) or email.
+    """
+    _require_profile(current_user)
+    return tasks.create_task(
+        current_user.id,
+        TaskKind.submit_application,
+        {"job_id": payload.job_id, "dry_run": payload.dry_run},
     )
 
 

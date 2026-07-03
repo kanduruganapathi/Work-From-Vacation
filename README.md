@@ -23,9 +23,16 @@ The frontend ships with an animated **three.js** background (a rotating globe of
 remote-job nodes) for a polished, product-grade landing and dashboard.
 
 ### Automation
+- **Real application submission** — for **Greenhouse / Lever** boards, a headless
+  browser (Playwright) fills and submits the application form with your contact
+  details + tailored resume. **Test-fill** (dry run) screenshots the filled form
+  without submitting; **Submit ▸** does it for real (with confirmation). Email
+  applications go via SMTP. Workday/LinkedIn/Naukri are flagged *apply manually*
+  (can't be automated within their ToS). Opt-in, off by default.
 - **Auto-apply autopilot** — set a minimum match score and a daily cap; the
   scheduler then auto-applies (tailored resume + cover letter) to new high-fit
-  roles on its own, respecting the cap.
+  roles on its own, respecting the cap. Enable **"Actually submit applications"**
+  to have it submit to supported boards too.
 - **Actionable materials** — the AI-tailored resume and cover letter on each
   application can be viewed, **edited, copied, downloaded, or regenerated** from
   the tracker.

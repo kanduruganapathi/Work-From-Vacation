@@ -53,6 +53,15 @@ class TaskKind(str, enum.Enum):
     job_hunt = "job_hunt"
     batch_apply = "batch_apply"
     auto_score = "auto_score"
+    submit_application = "submit_application"
+
+
+class SubmissionStatus(str, enum.Enum):
+    not_submitted = "not_submitted"
+    submitting = "submitting"
+    submitted = "submitted"
+    failed = "failed"
+    manual_needed = "manual_needed"
 
 
 class User(Base):
@@ -96,11 +105,23 @@ class Profile(Base):
     min_salary: Mapped[int | None] = mapped_column(nullable=True)
     years_experience: Mapped[int | None] = mapped_column(nullable=True)
 
+    # Contact details used to fill real application forms.
+    full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    linkedin_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    github_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    portfolio_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    current_location: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
     # Auto-apply autopilot: when enabled, the scheduler auto-applies to new
     # matches at/above ``autopilot_min_score``, up to ``autopilot_daily_limit``.
     autopilot_enabled: Mapped[bool] = mapped_column(default=False)
     autopilot_min_score: Mapped[int] = mapped_column(default=85)
     autopilot_daily_limit: Mapped[int] = mapped_column(default=5)
+    # When True, autopilot also *submits* to supported ATSes (Greenhouse/Lever/
+    # email) instead of stopping at prepared materials. Off by default —
+    # submitting on your behalf is consequential.
+    autopilot_auto_submit: Mapped[bool] = mapped_column(default=False)
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
@@ -190,6 +211,17 @@ class Application(Base):
     tailored_resume: Mapped[str | None] = mapped_column(Text, nullable=True)
     cover_letter: Mapped[str | None] = mapped_column(Text, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Real-submission tracking.
+    submission_status: Mapped[SubmissionStatus] = mapped_column(
+        Enum(SubmissionStatus), default=SubmissionStatus.not_submitted
+    )
+    submission_method: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    submission_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    screenshot_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    submitted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(

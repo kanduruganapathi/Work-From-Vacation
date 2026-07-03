@@ -173,6 +173,37 @@ def test_job_search() -> None:
     assert all("us" in (i["location"] or "").lower() for i in us["items"])
 
 
+def test_ats_detection() -> None:
+    from app.services import submitter
+
+    assert submitter.detect_ats("https://boards.greenhouse.io/x/jobs/1") == "greenhouse"
+    assert submitter.detect_ats("https://jobs.lever.co/x/abc") == "lever"
+    assert submitter.detect_ats("https://x.myworkdayjobs.com/job") == "workday"
+    assert submitter.detect_ats("https://linkedin.com/jobs/view/1") == "linkedin"
+    assert submitter.can_auto_submit("https://boards.greenhouse.io/x/jobs/1") is True
+    assert submitter.can_auto_submit("https://linkedin.com/jobs/1") is False
+
+
+def test_submittability_endpoint() -> None:
+    client.post("/api/jobs/seed")
+    job_id = client.get("/api/jobs?limit=1").json()[0]["id"]
+    resp = client.get(f"/api/jobs/{job_id}/submittability")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "method" in body and "auto_submittable" in body
+
+
+def test_submit_requires_profile() -> None:
+    headers = _auth_headers("submit@example.com")
+    client.post("/api/jobs/seed")
+    job_id = client.get("/api/jobs?limit=1").json()[0]["id"]
+    # No profile yet -> 400.
+    resp = client.post(
+        "/api/ai/submit", json={"job_id": job_id, "dry_run": True}, headers=headers
+    )
+    assert resp.status_code == 400
+
+
 def test_company_classifier() -> None:
     from app.services.company_classifier import classify
 

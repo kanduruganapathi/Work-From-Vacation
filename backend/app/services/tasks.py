@@ -13,8 +13,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 from app.agents import orchestrator
 from app.database import SessionLocal
-from app.models import Task, TaskKind, TaskStatus, User
-from app.services import scoring
+from app.models import Job, Task, TaskKind, TaskStatus, User
+from app.services import apply, scoring
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +60,8 @@ def _run(task_id: int, user_id: int, kind: TaskKind, params: dict) -> None:
             result = _run_auto_score(db, user, params, progress)
         elif kind == TaskKind.batch_apply:
             result = _run_batch_apply(db, user, params, progress)
+        elif kind == TaskKind.submit_application:
+            result = _run_submit(db, user, params, progress)
         else:
             result = {"error": f"Unknown task kind: {kind}"}
 
@@ -103,3 +105,18 @@ def _run_batch_apply(db, user, params, progress) -> dict:
         db, user, min_score=min_score, limit=limit, progress=progress
     )
     return {"message": f"Auto-applied to {len(created)} roles.", "applied": len(created)}
+
+
+def _run_submit(db, user, params, progress) -> dict:
+    job = db.get(Job, int(params["job_id"]))
+    if not job:
+        return {"message": "Job not found."}
+    dry_run = bool(params.get("dry_run", True))
+    progress(20, f"{'Preparing' if dry_run else 'Submitting'}: {job.title}...")
+    application = apply.submit_application(db, user, job, dry_run=dry_run)
+    return {
+        "message": application.submission_note or "Done.",
+        "submission_status": application.submission_status.value,
+        "method": application.submission_method,
+        "application_id": application.id,
+    }

@@ -70,6 +70,9 @@ class Settings(BaseSettings):
     # Per-run cap on jobs scored per user (cost control).
     auto_score_limit: int = 10
 
+    # Where email-based applications are sent (for testing, your own address).
+    application_email_to: str | None = None
+
     # Optional SMTP for email alerts. If unset, alerts are in-app only.
     smtp_host: str | None = None
     smtp_port: int = 587

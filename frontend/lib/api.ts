@@ -90,6 +90,13 @@ export type ApplicationStatus =
   | "rejected"
   | "withdrawn";
 
+export type SubmissionStatus =
+  | "not_submitted"
+  | "submitting"
+  | "submitted"
+  | "failed"
+  | "manual_needed";
+
 export interface Application {
   id: number;
   job_id: number;
@@ -97,6 +104,10 @@ export interface Application {
   tailored_resume: string | null;
   cover_letter: string | null;
   notes: string | null;
+  submission_status: SubmissionStatus;
+  submission_method: string | null;
+  submission_note: string | null;
+  submitted_at: string | null;
   created_at: string;
   updated_at: string;
   job: Job;
@@ -164,9 +175,16 @@ export interface Profile {
   resume_text?: string | null;
   min_salary?: number | null;
   years_experience?: number | null;
+  full_name?: string | null;
+  phone?: string | null;
+  linkedin_url?: string | null;
+  github_url?: string | null;
+  portfolio_url?: string | null;
+  current_location?: string | null;
   autopilot_enabled: boolean;
   autopilot_min_score: number;
   autopilot_daily_limit: number;
+  autopilot_auto_submit: boolean;
 }
 
 // ── Endpoints ───────────────────────────────────────────────────────────
@@ -272,6 +290,15 @@ export const api = {
       body: JSON.stringify({ min_score, limit }),
     }),
   getTask: (id: number) => request<Task>(`/api/ai/tasks/${id}`),
+  submitApplication: (job_id: number, dry_run: boolean) =>
+    request<Task>("/api/ai/submit", {
+      method: "POST",
+      body: JSON.stringify({ job_id, dry_run }),
+    }),
+  submittability: (job_id: number) =>
+    request<{ method: string; auto_submittable: boolean }>(
+      `/api/jobs/${job_id}/submittability`
+    ),
   interviewPrep: (job_id: number) =>
     request<InterviewPrep>("/api/ai/interview-prep", {
       method: "POST",

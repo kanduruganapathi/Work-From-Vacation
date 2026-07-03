@@ -34,16 +34,28 @@ function download(filename: string, text: string) {
 const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
 
+const SUB_LABEL: Record<string, string> = {
+  not_submitted: "Not submitted",
+  submitting: "Submitting…",
+  submitted: "✓ Submitted",
+  failed: "Submit failed",
+  manual_needed: "Apply manually",
+};
+
 export default function Applications({
   applications,
   aiEnabled,
+  busy,
   onChanged,
   onStatus,
+  onSubmit,
 }: {
   applications: Application[];
   aiEnabled: boolean;
+  busy: boolean;
   onChanged: () => void;
   onStatus: (msg: string) => void;
+  onSubmit: (jobId: number, dryRun: boolean) => void;
 }) {
   const [open, setOpen] = useState<number | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
@@ -160,6 +172,50 @@ export default function Applications({
                   ✕
                 </button>
               </div>
+              <div
+                className="row"
+                style={{ gap: 6, marginTop: 8, alignItems: "center" }}
+              >
+                <span className={`badge sub-${app.submission_status}`}>
+                  {SUB_LABEL[app.submission_status] || app.submission_status}
+                  {app.submission_method && app.submission_status !== "not_submitted"
+                    ? ` · ${app.submission_method}`
+                    : ""}
+                </span>
+                {app.submission_status !== "submitted" && (
+                  <>
+                    <button
+                      className="link-btn"
+                      onClick={() => onSubmit(app.job_id, true)}
+                      disabled={busy}
+                      title="Fill the form and screenshot it, without submitting"
+                    >
+                      Test-fill
+                    </button>
+                    <button
+                      className="link-btn"
+                      style={{ color: "var(--accent-2)" }}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Submit your application to “${app.job.title}” for real?`
+                          )
+                        )
+                          onSubmit(app.job_id, false);
+                      }}
+                      disabled={busy}
+                    >
+                      Submit ▸
+                    </button>
+                  </>
+                )}
+              </div>
+              {app.submission_note && (
+                <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+                  {app.submission_note}
+                </div>
+              )}
+
               <div className="row" style={{ gap: 8, marginTop: 6 }}>
                 {(app.tailored_resume || app.cover_letter) && (
                   <button

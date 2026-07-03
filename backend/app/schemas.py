@@ -41,9 +41,16 @@ class ProfileIn(BaseModel):
     remote_only: bool = True
     min_salary: int | None = None
     years_experience: int | None = None
+    full_name: str | None = None
+    phone: str | None = None
+    linkedin_url: str | None = None
+    github_url: str | None = None
+    portfolio_url: str | None = None
+    current_location: str | None = None
     autopilot_enabled: bool = False
     autopilot_min_score: int = Field(default=85, ge=0, le=100)
     autopilot_daily_limit: int = Field(default=5, ge=1, le=50)
+    autopilot_auto_submit: bool = False
 
 
 class ProfileOut(ProfileIn):
@@ -154,9 +161,24 @@ class ApplicationOut(BaseModel):
     tailored_resume: str | None = None
     cover_letter: str | None = None
     notes: str | None = None
+    submission_status: str = "not_submitted"
+    submission_method: str | None = None
+    submission_note: str | None = None
+    submitted_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
     job: JobOut
+
+
+class SubmitRequest(BaseModel):
+    job_id: int
+    dry_run: bool = True
+    tone: str = "professional"
+
+
+class SubmitabilityOut(BaseModel):
+    method: str
+    auto_submittable: bool
 
 
 # ── AI agents ─────────────────────────────────────────────────────────────

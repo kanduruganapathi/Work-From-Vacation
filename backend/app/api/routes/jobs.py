@@ -8,8 +8,14 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import EmploymentType, Job
-from app.schemas import JobFacets, JobOut, JobSearchResult, RefreshResult
-from app.services import aggregator, search
+from app.schemas import (
+    JobFacets,
+    JobOut,
+    JobSearchResult,
+    RefreshResult,
+    SubmitabilityOut,
+)
+from app.services import aggregator, search, submitter
 from app.services.sample_data import sample_jobs
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -79,6 +85,18 @@ def search_jobs(
         total=total,
         items=[JobOut.model_validate(j) for j in items],
         facets=JobFacets(**facets),
+    )
+
+
+@router.get("/{job_id}/submittability", response_model=SubmitabilityOut)
+def job_submittability(job_id: int, db: Session = Depends(get_db)) -> SubmitabilityOut:
+    """How this posting can be applied to (auto vs manual)."""
+    job = db.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    method = submitter.detect_ats(job.url)
+    return SubmitabilityOut(
+        method=method, auto_submittable=submitter.can_auto_submit(job.url)
     )
 
 

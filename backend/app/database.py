@@ -40,6 +40,18 @@ _ADDED_COLUMNS: list[tuple[str, str, str]] = [
     ("profiles", "autopilot_daily_limit", "INTEGER DEFAULT 5"),
     ("jobs", "company_type", "VARCHAR(32)"),
     ("jobs", "company_tier", "VARCHAR(16)"),
+    ("profiles", "full_name", "VARCHAR(255)"),
+    ("profiles", "phone", "VARCHAR(64)"),
+    ("profiles", "linkedin_url", "VARCHAR(512)"),
+    ("profiles", "github_url", "VARCHAR(512)"),
+    ("profiles", "portfolio_url", "VARCHAR(512)"),
+    ("profiles", "current_location", "VARCHAR(255)"),
+    ("profiles", "autopilot_auto_submit", "BOOLEAN DEFAULT 0"),
+    ("applications", "submission_status", "VARCHAR(16) DEFAULT 'not_submitted'"),
+    ("applications", "submission_method", "VARCHAR(32)"),
+    ("applications", "submission_note", "TEXT"),
+    ("applications", "screenshot_path", "VARCHAR(512)"),
+    ("applications", "submitted_at", "DATETIME"),
 ]
 
 

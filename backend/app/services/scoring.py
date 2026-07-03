@@ -185,9 +185,23 @@ def run_autopilot(db: Session, user: User) -> list[Application]:
         logger.info("Autopilot: daily limit reached for user %s", user.id)
         return []
 
-    return batch_auto_apply(
+    created = batch_auto_apply(
         db,
         user,
         min_score=profile.autopilot_min_score,
         limit=remaining,
     )
+
+    # Optionally submit for real to supported ATSes (opt-in, off by default).
+    if profile.autopilot_auto_submit and created:
+        from app.services import apply, submitter
+
+        for application in created:
+            job = db.get(Job, application.job_id)
+            if job and submitter.can_auto_submit(job.url):
+                try:
+                    apply.submit_application(db, user, job, dry_run=False)
+                except Exception as exc:
+                    logger.warning("Autopilot submit failed for %s: %s", job.id, exc)
+
+    return created
